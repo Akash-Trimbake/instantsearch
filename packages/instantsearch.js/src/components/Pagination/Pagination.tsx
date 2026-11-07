@@ -1,6 +1,6 @@
 /** @jsx h */
 
-import { cx } from '@algolia/ui-components-shared';
+import { cx } from 'instantsearch-ui-components';
 import { h } from 'preact';
 
 import { isSpecialClick } from '../../lib/utils';
@@ -182,6 +182,7 @@ function PaginationLink({
           rootProps={{
             className: cssClasses.link,
             'aria-label': ariaLabel,
+            'aria-current': isSelected ? 'page' : undefined,
             href: createURL(pageNumber),
             onClick: createClickHandler(pageNumber),
           }}

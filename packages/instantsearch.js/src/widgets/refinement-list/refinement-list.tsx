@@ -1,6 +1,6 @@
 /** @jsx h */
 
-import { cx } from '@algolia/ui-components-shared';
+import { cx } from 'instantsearch-ui-components';
 import { h, render } from 'preact';
 
 import RefinementList from '../../components/RefinementList/RefinementList';
@@ -199,6 +199,15 @@ export type RefinementListWidgetParams = {
    */
   searchableEscapeFacetValues?: boolean;
   /**
+   * When activated, submitting the search box will select the first item in the list.
+   * @default true
+   */
+  searchableSelectOnSubmit?: boolean;
+  /**
+   * Accessible name (aria-label) for the "Show more"/"Show less" toggle button.
+   */
+  showMoreButtonLabel?: string;
+  /**
    * Templates to use for the widget.
    */
   templates?: RefinementListTemplates;
@@ -216,9 +225,11 @@ const renderer =
     searchBoxTemplates,
     renderState,
     showMore,
+    showMoreButtonLabel,
     searchable,
     searchablePlaceholder,
     searchableIsAlwaysActive,
+    searchableSelectOnSubmit,
   }: {
     containerNode: HTMLElement;
     cssClasses: RefinementListComponentCSSClasses;
@@ -229,9 +240,11 @@ const renderer =
     templates: RefinementListOwnTemplates;
     searchBoxTemplates: SearchBoxTemplates;
     showMore?: boolean;
+    showMoreButtonLabel?: string;
     searchable?: boolean;
     searchablePlaceholder?: string;
     searchableIsAlwaysActive?: boolean;
+    searchableSelectOnSubmit?: boolean;
   }): Renderer<RefinementListRenderState, RefinementListConnectorParams> =>
   (
     {
@@ -275,10 +288,12 @@ const renderer =
         searchIsAlwaysActive={searchableIsAlwaysActive}
         isFromSearch={isFromSearch}
         showMore={showMore && !isFromSearch && items.length > 0}
+        showMoreButtonLabel={showMoreButtonLabel}
         toggleShowMore={toggleShowMore}
         isShowingMore={isShowingMore}
         hasExhaustiveItems={hasExhaustiveItems}
         canToggleShowMore={canToggleShowMore}
+        searchableSelectOnSubmit={searchableSelectOnSubmit}
       />,
       containerNode
     );
@@ -320,10 +335,12 @@ const refinementList: RefinementListWidget = function refinementList(
     limit,
     showMore,
     showMoreLimit,
+    showMoreButtonLabel,
     searchable = false,
     searchablePlaceholder = 'Search...',
     searchableEscapeFacetValues = true,
     searchableIsAlwaysActive = true,
+    searchableSelectOnSubmit = true,
     cssClasses: userCssClasses = {},
     templates = {},
     transformItems,
@@ -420,7 +437,9 @@ const refinementList: RefinementListWidget = function refinementList(
     searchable,
     searchablePlaceholder,
     searchableIsAlwaysActive,
+    searchableSelectOnSubmit,
     showMore,
+    showMoreButtonLabel,
   });
 
   const makeWidget = connectRefinementList(specializedRenderer, () =>

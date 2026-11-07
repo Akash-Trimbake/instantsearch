@@ -1,5 +1,6 @@
-import algoliasearch from 'algoliasearch/lite';
+import { liteClient as algoliasearch } from 'algoliasearch/lite';
 import instantsearch from 'instantsearch.js';
+import { carousel } from 'instantsearch.js/es/templates';
 import {
   configure,
   hits,
@@ -7,7 +8,13 @@ import {
   panel,
   refinementList,
   searchBox,
+  trendingItems,
+  chat,
+  chatTrigger,
+  currentRefinements,
 } from 'instantsearch.js/es/widgets';
+
+import 'instantsearch.css/themes/satellite.css';
 
 const searchClient = algoliasearch(
   'latency',
@@ -20,17 +27,45 @@ const search = instantsearch({
   insights: true,
 });
 
+const productItemTemplate = (item, { html }) => html`
+  <article class="ais-Carousel-hit">
+    <div class="ais-Carousel-hit-image">
+      <img src="${item.image}" />
+    </div>
+    <h2 class="ais-Carousel-hit-title">
+      <a
+        href="/products.html?pid=${item.objectID}"
+        class="ais-Carousel-hit-link"
+      >
+        ${item.name}
+      </a>
+    </h2>
+  </article>
+`;
+
 search.addWidgets([
   searchBox({
     container: '#searchbox',
+    aiMode: true,
+  }),
+  panel({
+    templates: { header: 'Current Refinements' },
+    hidden: ({ items }) => items.length === 0,
+  })(currentRefinements)({
+    container: '#current-refinements',
   }),
   hits({
     container: '#hits',
     templates: {
       item: (hit, { html, components }) => html`
         <article>
-          <h1>${components.Highlight({ hit, attribute: 'name' })}</h1>
+          <h1>
+            <a href="/products.html?pid=${hit.objectID}"
+              >${components.Highlight({ hit, attribute: 'name' })}</a
+            >
+          </h1>
           <p>${components.Highlight({ hit, attribute: 'description' })}</p>
+          <a href="/products.html?pid=${hit.objectID}">See product</a>
         </article>
       `,
     },
@@ -43,9 +78,35 @@ search.addWidgets([
   })(refinementList)({
     container: '#brand-list',
     attribute: 'brand',
+    showMore: true,
+  }),
+  panel({
+    templates: { header: 'categories' },
+  })(refinementList)({
+    container: '#categories-list',
+    attribute: 'categories',
+    showMore: true,
   }),
   pagination({
     container: '#pagination',
+  }),
+  trendingItems({
+    container: '#trending',
+    limit: 6,
+    templates: {
+      item: productItemTemplate,
+      layout: carousel(),
+    },
+  }),
+  chat({
+    container: '#chat',
+    agentId: 'eedef238-5468-470d-bc37-f99fa741bd25',
+    templates: {
+      item: productItemTemplate,
+    },
+  }),
+  chatTrigger({
+    container: '#chat-trigger',
   }),
 ]);
 

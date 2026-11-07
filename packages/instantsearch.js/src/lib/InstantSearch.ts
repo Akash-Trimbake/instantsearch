@@ -14,8 +14,10 @@ import {
   createDocumentationMessageGenerator,
   createDocumentationLink,
   defer,
+  hydrateRecommendCache,
   hydrateSearchClient,
   noop,
+  now,
   warning,
   setIndexHelperState,
   isIndexWidget,
@@ -31,14 +33,15 @@ import type {
   InsightsClient as AlgoliaInsightsClient,
   SearchClient,
   Widget,
+  IndexWidget,
   UiState,
   CreateURL,
   Middleware,
   MiddlewareDefinition,
   RenderState,
   InitialResults,
+  CompositionClient,
 } from '../types';
-import type { IndexWidget } from '../widgets/index/index';
 import type { AlgoliaSearchHelper } from 'algoliasearch-helper';
 
 const withUsage = createDocumentationMessageGenerator({
@@ -59,12 +62,19 @@ type NoInfer<T> = T extends infer S ? S : never;
  */
 export type InstantSearchOptions<
   TUiState extends UiState = UiState,
-  TRouteState = TUiState
+  TRouteState = TUiState,
 > = {
   /**
    * The name of the main index. If no indexName is provided, you have to manually add an index widget.
    */
   indexName?: string;
+
+  /**
+   * The objectID of the composition.
+   * If this is passed, the composition API will be used for search.
+   * Multi-index search is not supported with this option.
+   */
+  compositionID?: string;
 
   /**
    * The search client to plug to InstantSearch.js
@@ -93,7 +103,7 @@ export type InstantSearchOptions<
    * });
    * ```
    */
-  searchClient: SearchClient;
+  searchClient: SearchClient | CompositionClient;
 
   /**
    * The locale used to display numbers. This will be passed
@@ -171,6 +181,17 @@ export type InstantSearchOptions<
      */
     // @MAJOR: Remove legacy behaviour
     preserveSharedStateOnUnmount?: boolean;
+    /**
+     * Changes the way root levels of hierarchical facets have their count displayed.
+     *
+     * If `false` (by default), the count of the refined root level is updated to match the count of the actively refined parent level.
+     *
+     * If `true`, the count of the root level stays the same as the count of all children levels.
+     *
+     * @default false
+     */
+    // @MAJOR: Remove legacy behaviour here and in algoliasearch-helper
+    persistHierarchicalRootCount?: boolean;
   };
 };
 
@@ -178,7 +199,10 @@ export type InstantSearchStatus = 'idle' | 'loading' | 'stalled' | 'error';
 
 export const INSTANTSEARCH_FUTURE_DEFAULTS: Required<
   InstantSearchOptions['future']
-> = { preserveSharedStateOnUnmount: false };
+> = {
+  preserveSharedStateOnUnmount: false,
+  persistHierarchicalRootCount: false,
+};
 
 /**
  * The actual implementation of the InstantSearch. This is
@@ -187,10 +211,11 @@ export const INSTANTSEARCH_FUTURE_DEFAULTS: Required<
  */
 class InstantSearch<
   TUiState extends UiState = UiState,
-  TRouteState = TUiState
+  TRouteState = TUiState,
 > extends EventEmitter {
   public client: InstantSearchOptions['searchClient'];
   public indexName: string;
+  public compositionID?: string;
   public insightsClient: AlgoliaInsightsClient | null;
   public onStateChange: InstantSearchOptions<TUiState>['onStateChange'] | null =
     null;
@@ -205,15 +230,29 @@ class InstantSearch<
   public _searchStalledTimer: any;
   public _initialUiState: TUiState;
   public _initialResults: InitialResults | null;
+  public _manuallyResetScheduleSearch: boolean = false;
+  public _resetScheduleSearch?: () => void;
   public _createURL: CreateURL<TUiState>;
   public _searchFunction?: InstantSearchOptions['searchFunction'];
   public _mainHelperSearch?: AlgoliaSearchHelper['search'];
+  public _hasSearchWidget: boolean = false;
+  public _hasRecommendWidget: boolean = false;
   public _insights: InstantSearchOptions['insights'];
+  /**
+   * The options the instance was created with, kept verbatim so consumers
+   * (e.g. usage events) can introspect the configuration without the class
+   * having to enumerate every option by hand. Typed without the class generics
+   * on purpose: referencing `TUiState`/`TRouteState` here (they sit in
+   * contravariant positions inside `InstantSearchOptions`) would break the
+   * assignability of `InstantSearch<SpecificUiState>` to `InstantSearch`.
+   */
+  public _initialOptions: InstantSearchOptions | null;
   public middleware: Array<{
     creator: Middleware<TUiState>;
     instance: MiddlewareDefinition<TUiState>;
   }> = [];
   public sendEventToInsights: (event: InsightsEvent) => void;
+  public _createdAt: number = now();
   /**
    * The status of the search. Can be "idle", "loading", "stalled", or "error".
    */
@@ -246,6 +285,7 @@ Use \`InstantSearch.status === "stalled"\` instead.`
 
     const {
       indexName = '',
+      compositionID,
       numberLocale,
       initialUiState = {} as TUiState,
       routing = null,
@@ -320,14 +360,18 @@ See documentation: ${createDocumentationLink({
           `);
     }
 
+    this._initialOptions = options as unknown as InstantSearchOptions;
     this.client = searchClient;
     this.future = future;
     this.insightsClient = insightsClient;
     this.indexName = indexName;
+    this.compositionID = compositionID;
     this.helper = null;
     this.mainHelper = null;
     this.mainIndex = index({
-      indexName,
+      // we use an index widget to render compositions
+      // this only works because there's only one composition index allow for now
+      indexName: this.compositionID || this.indexName,
     });
     this.onStateChange = onStateChange;
 
@@ -460,7 +504,9 @@ See documentation: ${createDocumentationLink({
    * Widgets can be added either before or after InstantSearch has started.
    * @param widgets The array of widgets to add to InstantSearch.
    */
-  public addWidgets(widgets: Array<Widget | IndexWidget>) {
+  public addWidgets(
+    widgets: Array<Widget | IndexWidget | Array<IndexWidget | Widget>>
+  ) {
     if (!Array.isArray(widgets)) {
       throw new Error(
         withUsage(
@@ -470,15 +516,12 @@ See documentation: ${createDocumentationLink({
     }
 
     if (
-      widgets.some(
-        (widget) =>
-          typeof widget.init !== 'function' &&
-          typeof widget.render !== 'function'
-      )
+      this.compositionID &&
+      widgets.some((w) => !Array.isArray(w) && isIndexWidget(w) && !w._isolated)
     ) {
       throw new Error(
         withUsage(
-          'The widget definition expects a `render` and/or an `init` method.'
+          'The `index` widget cannot be used with a composition-based InstantSearch implementation.'
         )
       );
     }
@@ -510,18 +553,12 @@ See documentation: ${createDocumentationLink({
    *
    * The widgets must implement a `dispose()` method to clear their states.
    */
-  public removeWidgets(widgets: Array<Widget | IndexWidget>) {
+  public removeWidgets(widgets: Array<Widget | IndexWidget | Widget[]>) {
     if (!Array.isArray(widgets)) {
       throw new Error(
         withUsage(
           'The `removeWidgets` method expects an array of widgets. Please use `removeWidget`.'
         )
-      );
-    }
-
-    if (widgets.some((widget) => typeof widget.dispose !== 'function')) {
-      throw new Error(
-        withUsage('The widget definition expects a `dispose` method.')
       );
     }
 
@@ -532,9 +569,7 @@ See documentation: ${createDocumentationLink({
 
   /**
    * Ends the initialization of InstantSearch.js and triggers the
-   * first search. This method should be called after all widgets have been added
-   * to the instance of InstantSearch.js. InstantSearch.js also supports adding and removing
-   * widgets after the start as an **EXPERIMENTAL** feature.
+   * first search.
    */
   public start() {
     if (this.started) {
@@ -549,14 +584,29 @@ See documentation: ${createDocumentationLink({
     // In Vue InstantSearch' hydrate, a main helper gets set before start, so
     // we need to respect this helper as a way to keep all listeners correct.
     const mainHelper =
-      this.mainHelper || algoliasearchHelper(this.client, this.indexName);
+      this.mainHelper ||
+      algoliasearchHelper(this.client, this.indexName, undefined, {
+        persistHierarchicalRootCount: this.future.persistHierarchicalRootCount,
+      });
+
+    if (this.compositionID) {
+      mainHelper.searchForFacetValues =
+        mainHelper.searchForCompositionFacetValues.bind(mainHelper);
+    }
 
     mainHelper.search = () => {
-      this.status = 'loading';
-      this.scheduleRender(false);
+      const hasSearchOrRecommendWidget =
+        this._hasSearchWidget || this._hasRecommendWidget;
+
+      if (hasSearchOrRecommendWidget) {
+        this.status = 'loading';
+      }
+      this.scheduleRender(!hasSearchOrRecommendWidget);
 
       warning(
-        Boolean(this.indexName) ||
+        !hasSearchOrRecommendWidget ||
+          Boolean(this.indexName) ||
+          Boolean(this.compositionID) ||
           this.mainIndex.getWidgets().some(isIndexWidget),
         'No indexName provided, nor an explicit index widget in the widgets tree. This is required to be able to display results.'
       );
@@ -565,7 +615,19 @@ See documentation: ${createDocumentationLink({
       // under the hood, we have a different implementation. It should be
       // completely transparent for the rest of the codebase. Only this module
       // is impacted.
-      return mainHelper.searchOnlyWithDerivedHelpers();
+      if (this._hasSearchWidget) {
+        if (this.compositionID) {
+          mainHelper.searchWithComposition();
+        } else {
+          mainHelper.searchOnlyWithDerivedHelpers();
+        }
+      }
+
+      if (this._hasRecommendWidget) {
+        mainHelper.recommend();
+      }
+
+      return mainHelper;
     };
 
     if (this._searchFunction) {
@@ -616,7 +678,7 @@ See documentation: ${createDocumentationLink({
       (error as any).error = error;
       this.error = error;
       this.status = 'error';
-      this.scheduleRender(false);
+      this.scheduleRender(!this._hasSearchWidget && !this._hasRecommendWidget);
 
       // This needs to execute last because it throws the error.
       this.emit('error', error);
@@ -636,20 +698,32 @@ See documentation: ${createDocumentationLink({
 
     if (this._initialResults) {
       hydrateSearchClient(this.client, this._initialResults);
+      hydrateRecommendCache(this.mainHelper, this._initialResults);
 
       const originalScheduleSearch = this.scheduleSearch;
       // We don't schedule a first search when initial results are provided
       // because we already have the results to render. This skips the initial
       // network request on the browser on `start`.
       this.scheduleSearch = defer(noop);
-      // We also skip the initial network request when widgets are dynamically
-      // added in the first tick (that's the case in all the framework-based flavors).
-      // When we add a widget to `index`, it calls `scheduleSearch`. We can rely
-      // on our `defer` util to restore the original `scheduleSearch` value once
-      // widgets are added to hook back to the regular lifecycle.
-      defer(() => {
-        this.scheduleSearch = originalScheduleSearch;
-      })();
+      if (this._manuallyResetScheduleSearch) {
+        // If `_manuallyResetScheduleSearch` is passed, it means that we don't
+        // want to rely on a single `defer` to reset the `scheduleSearch`.
+        // Instead, the consumer will call `_resetScheduleSearch` to restore
+        // the original `scheduleSearch` function.
+        // This happens in the React flavour after rendering.
+        this._resetScheduleSearch = () => {
+          this.scheduleSearch = originalScheduleSearch;
+        };
+      } else {
+        // We also skip the initial network request when widgets are dynamically
+        // added in the first tick (that's the case in all the framework-based flavors).
+        // When we add a widget to `index`, it calls `scheduleSearch`. We can rely
+        // on our `defer` util to restore the original `scheduleSearch` value once
+        // widgets are added to hook back to the regular lifecycle.
+        defer(() => {
+          this.scheduleSearch = originalScheduleSearch;
+        })();
+      }
     }
     // We only schedule a search when widgets have been added before `start()`
     // because there are listeners that can use these results.
@@ -696,9 +770,7 @@ See documentation: ${createDocumentationLink({
   }
 
   /**
-   * Removes all widgets without triggering a search afterwards. This is an **EXPERIMENTAL** feature,
-   * if you find an issue with it, please
-   * [open an issue](https://github.com/algolia/instantsearch/issues/new?title=Problem%20with%20dispose).
+   * Removes all widgets without triggering a search afterwards.
    * @return {undefined} This method does not return anything
    */
   public dispose(): void {
@@ -724,6 +796,10 @@ See documentation: ${createDocumentationLink({
     this.middleware.forEach(({ instance }) => {
       instance.unsubscribe();
     });
+
+    // Cleared after unsubscribe so in-flight readers (e.g. the insights
+    // start-event listener) have detached before the reference goes away.
+    this._initialOptions = null;
   }
 
   public scheduleSearch = defer(() => {
@@ -732,23 +808,35 @@ See documentation: ${createDocumentationLink({
     }
   });
 
-  public scheduleRender = defer((shouldResetStatus: boolean = true) => {
-    if (!this.mainHelper?.hasPendingRequests()) {
-      clearTimeout(this._searchStalledTimer);
-      this._searchStalledTimer = null;
+  public scheduleRender = defer(
+    (shouldResetStatus: boolean = true) => {
+      if (!this.mainHelper?.hasPendingRequests()) {
+        clearTimeout(this._searchStalledTimer);
+        this._searchStalledTimer = null;
 
-      if (shouldResetStatus) {
-        this.status = 'idle';
-        this.error = undefined;
+        if (shouldResetStatus) {
+          this.status = 'idle';
+          this.error = undefined;
+        }
       }
-    }
 
-    this.mainIndex.render({
-      instantSearchInstance: this as unknown as InstantSearch<UiState, UiState>,
-    });
+      this.mainIndex.render({
+        instantSearchInstance: this as unknown as InstantSearch<
+          UiState,
+          UiState
+        >,
+      });
 
-    this.emit('render');
-  });
+      this.emit('render');
+    },
+    // Renders scheduled in the same microtask collapse into one run, so the
+    // status reset accumulates instead of letting the first caller decide: a
+    // render scheduled for a reason unrelated to the search must not cancel the
+    // one a search result asks for, or it would strand the status on `loading`.
+    ([shouldResetStatus = true], [nextShouldResetStatus = true]): [boolean] => [
+      shouldResetStatus || nextShouldResetStatus,
+    ]
+  );
 
   public scheduleStalledRender() {
     if (!this._searchStalledTimer) {
@@ -763,10 +851,12 @@ See documentation: ${createDocumentationLink({
    * Set the UI state and trigger a search.
    * @param uiState The next UI state or a function computing it from the current state
    * @param callOnStateChange private parameter used to know if the method is called from a state change
+   * @param onApply private parameter called with the UI state notified to the middleware when this notification applies this UI state and no other change. With a controlled `onStateChange`, it can be later or never.
    */
   public setUiState(
     uiState: TUiState | ((previousUiState: TUiState) => TUiState),
-    callOnStateChange: boolean = true
+    callOnStateChange: boolean = true,
+    onApply?: (notifiedUiState: TUiState) => void
   ): void {
     if (!this.mainHelper) {
       throw new Error(
@@ -786,23 +876,40 @@ See documentation: ${createDocumentationLink({
       this.onStateChange({
         uiState: nextUiState,
         setUiState: (finalUiState) => {
-          setIndexHelperState(
+          this._applyUiState(
             typeof finalUiState === 'function'
               ? finalUiState(nextUiState)
               : finalUiState,
-            this.mainIndex
+            onApply
           );
-
-          this.scheduleSearch();
-          this.onInternalStateChange();
         },
       });
     } else {
-      setIndexHelperState(nextUiState, this.mainIndex);
-
-      this.scheduleSearch();
-      this.onInternalStateChange();
+      this._applyUiState(nextUiState, onApply);
     }
+  }
+
+  /**
+   * Set while `_applyUiState` sets the helper state. The index widgets notify
+   * their state change with its `onApply`, as part of applying that UI state.
+   */
+  public _applyingUiState?: {
+    onApply?: (notifiedUiState: TUiState) => void;
+  };
+
+  public _applyUiState(
+    uiState: TUiState,
+    onApply?: (notifiedUiState: TUiState) => void
+  ) {
+    this._applyingUiState = { onApply };
+    try {
+      setIndexHelperState(uiState, this.mainIndex);
+    } finally {
+      this._applyingUiState = undefined;
+    }
+
+    this.scheduleSearch();
+    this.onInternalStateChange(onApply);
   }
 
   public getUiState(): TUiState {
@@ -814,15 +921,24 @@ See documentation: ${createDocumentationLink({
     return this.mainIndex.getWidgetUiState({}) as TUiState;
   }
 
-  public onInternalStateChange = defer(() => {
-    const nextUiState = this.mainIndex.getWidgetUiState({}) as TUiState;
+  public onInternalStateChange = defer(
+    (onApply?: (notifiedUiState: TUiState) => void) => {
+      const nextUiState = this.mainIndex.getWidgetUiState({}) as TUiState;
 
-    this.middleware.forEach(({ instance }) => {
-      instance.onStateChange({
-        uiState: nextUiState,
+      onApply?.(nextUiState);
+
+      this.middleware.forEach(({ instance }) => {
+        instance.onStateChange({
+          uiState: nextUiState,
+        });
       });
-    });
-  });
+    },
+    // The notified state applies a UI state given to `setUiState` when it's the
+    // last change: applying it overwrites earlier changes, but a later change
+    // is part of the notified state. The changes made while applying it pass
+    // the same `onApply`.
+    (_pending, next) => next
+  );
 
   public createURL(nextState: TUiState = {} as TUiState): string {
     if (!this.started) {

@@ -21,6 +21,13 @@ fs.writeFileSync(
   ),
   "export * from './index-vue3';"
 );
+fs.writeFileSync(
+  path.resolve(
+    __dirname,
+    '../packages/vue-instantsearch/src/util/vue-compat/Highlighter/index.js'
+  ),
+  "export { default } from './index-vue3';"
+);
 
 console.log('switching to Vue 3 for Jest');
 shell.sed(
@@ -31,4 +38,7 @@ shell.sed(
 );
 
 console.log('installing');
-shell.exec('yarn');
+// `--no-immutable`: swapping the Vue major above intentionally desyncs
+// package.json from the lockfile, and Yarn enables immutable installs by
+// default on CI.
+shell.exec('yarn install --no-immutable');

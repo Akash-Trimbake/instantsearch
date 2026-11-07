@@ -1,5 +1,6 @@
 import { fakeAct } from '../../common';
 
+import { createLinksTests } from './links';
 import { createOptimisticUiTests } from './optimistic-ui';
 import { createOptionsTests } from './options';
 
@@ -13,14 +14,15 @@ export type PaginationWidgetSetup = TestSetup<{
 
 export function createPaginationWidgetTests(
   setup: PaginationWidgetSetup,
-  { act = fakeAct, skippedTests = {} }: TestOptions = {}
+  { act = fakeAct, skippedTests = {}, flavor = 'javascript' }: TestOptions = {}
 ) {
   beforeAll(() => {
     document.body.innerHTML = '';
   });
 
   describe('Pagination widget common tests', () => {
-    createOptimisticUiTests(setup, { act, skippedTests });
-    createOptionsTests(setup, { act, skippedTests });
+    createOptimisticUiTests(setup, { act, skippedTests, flavor });
+    createOptionsTests(setup, { act, skippedTests, flavor });
+    createLinksTests(setup, { act, skippedTests, flavor });
   });
 }

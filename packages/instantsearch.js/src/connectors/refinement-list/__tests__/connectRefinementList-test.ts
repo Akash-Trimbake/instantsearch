@@ -1,3 +1,7 @@
+/**
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
+ */
+
 import {
   createSingleSearchResponse,
   createSearchClient,
@@ -1598,6 +1602,7 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/refinement-
 
       const helper = jsHelper(
         createSearchClient({
+          // @ts-ignore v5 does not have this method, but it's easier to have it here. In a future version we can replace this method and its usages with search({ type: 'facet })
           searchForFacetValues() {
             return Promise.resolve([
               {
@@ -1719,6 +1724,7 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/refinement-
 
       const helper = jsHelper(
         createSearchClient({
+          // @ts-ignore v5 does not have this method, but it's easier to have it here. In a future version we can replace this method and its usages with search({ type: 'facet })
           searchForFacetValues() {
             return Promise.resolve([
               {
@@ -1801,6 +1807,7 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/refinement-
 
       const helper = jsHelper(
         createSearchClient({
+          // @ts-ignore v5 does not have this method, but it's easier to have it here. In a future version we can replace this method and its usages with search({ type: 'facet })
           searchForFacetValues() {
             return Promise.resolve([
               {
@@ -1911,6 +1918,7 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/refinement-
 
       const helper = jsHelper(
         createSearchClient({
+          // @ts-ignore v5 does not have this method, but it's easier to have it here. In a future version we can replace this method and its usages with search({ type: 'facet })
           searchForFacetValues() {
             return Promise.resolve([
               {
@@ -2029,6 +2037,7 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/refinement-
 
       const helper = jsHelper(
         createSearchClient({
+          // @ts-ignore v5 does not have this method, but it's easier to have it here. In a future version we can replace this method and its usages with search({ type: 'facet })
           searchForFacetValues() {
             return Promise.resolve([
               {

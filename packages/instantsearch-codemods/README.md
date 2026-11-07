@@ -4,6 +4,7 @@
 - [Codemods](#codemods)
   - [`rish-to-ris`](#rish-to-ris)
   - [`ris-v6-to-v7`](#ris-v6-to-v7)
+  - [`addWidget-to-addWidgets`](#addwidget-to-addwidgets)
   - [Notes](#notes)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -33,10 +34,18 @@ This will:
 npx @codeshift/cli --packages 'instantsearch-codemods#ris-v6-to-v7' <path>
 ```
 
-### Notes
+### `addWidget-to-addWidgets`
 
-If you are using Prettier or ESLint, make sure to run its autofixing after this transformation, since code can be formatted differently after it has been transformed. For example, in our repository, the Prettier command would be:
+This will replace all `addWidget` calls to `addWidgets` and `removeWidget` calls to `removeWidgets`.
 
 ```
-yarn prettier --write '{examples,stories,.storybook}/**/*.{js,jsx,ts,tsx}'
+npx @codeshift/cli --packages 'instantsearch-codemods#addWidget-to-addWidgets' <path>
+```
+
+### Notes
+
+If you are using a formatter or a linter, make sure to run its autofixing after this transformation, since code can be formatted differently after it has been transformed. In our repository, that would be:
+
+```
+yarn format
 ```

@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 
 import { mount } from '../../../test/utils';
@@ -24,6 +24,21 @@ it('passes props to widgetParams', () => {
   expect(wrapper.vm.widgetParams).toEqual({
     indexName: 'the name',
     indexId: 'the id',
+    isolated: false,
+  });
+});
+
+it('passes the `isolated` prop to widgetParams without an `indexName`', () => {
+  const wrapper = mount(Index, {
+    propsData: {
+      isolated: true,
+    },
+  });
+
+  expect(wrapper.vm.widgetParams).toEqual({
+    indexName: undefined,
+    indexId: undefined,
+    isolated: true,
   });
 });
 

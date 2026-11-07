@@ -1,13 +1,12 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 
 import {
   createInstantSearchTestWrapper,
   InstantSearchTestWrapper,
 } from '@instantsearch/testutils';
-import { render, waitFor } from '@testing-library/react';
-import { renderHook } from '@testing-library/react-hooks';
+import { render, waitFor, renderHook } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 

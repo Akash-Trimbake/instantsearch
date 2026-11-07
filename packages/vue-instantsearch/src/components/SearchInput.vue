@@ -23,15 +23,14 @@
       :value="value || modelValue"
       @focus="$emit('focus', $event)"
       @blur="$emit('blur', $event)"
-      @input="
-        $emit('input', $event.target.value);
-        $emit('update:modelValue', $event.target.value);
-      "
+      @input="onInput($event)"
+      @compositionend="onInput($event)"
       ref="input"
     />
     <button
       type="submit"
       :title="submitTitle"
+      :aria-label="submitTitle"
       :class="suit('submit')"
       :hidden="showLoadingIndicator && shouldShowLoadingIndicator"
     >
@@ -49,10 +48,10 @@
         </svg>
       </slot>
     </button>
-
     <button
       type="reset"
       :title="resetTitle"
+      :aria-label="resetTitle"
       :class="suit('reset')"
       :hidden="
         (!value && !modelValue) ||
@@ -133,6 +132,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    ignoreCompositionEvents: {
+      type: Boolean,
+      default: false,
+    },
     submitTitle: {
       type: String,
       default: 'Search',
@@ -161,6 +164,12 @@ export default {
   methods: {
     isFocused() {
       return document.activeElement === this.$refs.input;
+    },
+    onInput(event) {
+      if (!(this.ignoreCompositionEvents && event.isComposing)) {
+        this.$emit('input', event.target.value);
+        this.$emit('update:modelValue', event.target.value);
+      }
     },
     onFormSubmit() {
       const input = this.$refs.input;

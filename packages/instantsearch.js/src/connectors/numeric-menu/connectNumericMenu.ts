@@ -214,7 +214,7 @@ const connectNumericMenu: NumericMenuConnector = function connectNumericMenu(
 
       dispose({ state }) {
         unmountFn();
-        return state.clearRefinements(attribute);
+        return state.removeNumericRefinement(attribute);
       },
 
       getWidgetUiState(uiState, { searchParameters }) {
@@ -235,27 +235,30 @@ const connectNumericMenu: NumericMenuConnector = function connectNumericMenu(
         const min = (values['>='] && values['>='][0]) || '';
         const max = (values['<='] && values['<='][0]) || '';
 
-        return removeEmptyRefinementsFromUiState({
-          ...uiState,
-          numericMenu: {
-            ...uiState.numericMenu,
-            [attribute]: `${min}:${max}`,
+        return removeEmptyRefinementsFromUiState(
+          {
+            ...uiState,
+            numericMenu: {
+              ...uiState.numericMenu,
+              [attribute]: `${min}:${max}`,
+            },
           },
-        });
+          attribute
+        );
       },
 
       getWidgetSearchParameters(searchParameters, { uiState }) {
         const value = uiState.numericMenu && uiState.numericMenu[attribute];
 
-        const withoutRefinements = searchParameters.clearRefinements(attribute);
+        const withoutRefinements = searchParameters.setQueryParameters({
+          numericRefinements: {
+            ...searchParameters.numericRefinements,
+            [attribute]: {},
+          },
+        });
 
         if (!value) {
-          return withoutRefinements.setQueryParameters({
-            numericRefinements: {
-              ...withoutRefinements.numericRefinements,
-              [attribute]: {},
-            },
-          });
+          return withoutRefinements;
         }
 
         const isExact = value.indexOf(':') === -1;
@@ -334,7 +337,7 @@ const connectNumericMenu: NumericMenuConnector = function connectNumericMenu(
         const preparedItems = prepareItems(state);
         let allIsSelected = true;
         // @TODO avoid for..of for polyfill reasons
-        // eslint-disable-next-line no-restricted-syntax
+        // eslint-disable-next-line instantsearch/no-for-of
         for (const item of preparedItems) {
           if (item.isRefined && decodeURI(item.value) !== '{}') {
             allIsSelected = false;
@@ -477,33 +480,28 @@ function hasNumericRefinement(
   operator: SearchParameters.Operator,
   value: number
 ) {
-  return (
-    currentRefinements[operator] !== undefined &&
-    currentRefinements[operator]!.includes(value)
-  );
+  const refinements = currentRefinements[operator];
+
+  return refinements !== undefined && refinements.includes(value);
 }
 
-function removeEmptyRefinementsFromUiState(indexUiState: IndexUiState) {
-  const { numericMenu, ...indexUiStateBase } = indexUiState;
-
-  if (!numericMenu) {
+function removeEmptyRefinementsFromUiState(
+  indexUiState: IndexUiState,
+  attribute: string
+): IndexUiState {
+  if (!indexUiState.numericMenu) {
     return indexUiState;
   }
 
-  const connectorUiState = Object.keys(numericMenu).reduce(
-    (acc, key) => ({
-      ...acc,
-      ...(numericMenu[key] !== ':' ? { [key]: numericMenu[key] } : {}),
-    }),
-    {}
-  );
+  if (indexUiState.numericMenu[attribute] === ':') {
+    delete indexUiState.numericMenu[attribute];
+  }
 
-  return {
-    ...indexUiStateBase,
-    ...(Object.keys(connectorUiState).length > 0
-      ? { numericMenu: connectorUiState }
-      : {}),
-  };
+  if (Object.keys(indexUiState.numericMenu).length === 0) {
+    delete indexUiState.numericMenu;
+  }
+
+  return indexUiState;
 }
 
 export default connectNumericMenu;

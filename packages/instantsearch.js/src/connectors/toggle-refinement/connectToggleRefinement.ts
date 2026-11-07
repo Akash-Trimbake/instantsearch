@@ -72,7 +72,7 @@ const createSendEvent = ({
         eventModifier,
         payload: {
           eventName,
-          index: helper.getIndex(),
+          index: helper.lastResults?.index || helper.state.index,
           filters: on.map((value) => `${attribute}:${value}`),
         },
         attribute,
@@ -455,8 +455,8 @@ As this is not supported, please make sure to remove this other widget or this T
           }
 
           let withFacetConfiguration = searchParameters
-            .clearRefinements(attribute)
-            .addDisjunctiveFacet(attribute);
+            .addDisjunctiveFacet(attribute)
+            .removeDisjunctiveFacetRefinement(attribute);
 
           const isRefined = Boolean(
             uiState.toggle && uiState.toggle[attribute]

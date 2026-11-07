@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 
 import { mount } from '../../../test/utils';
@@ -35,7 +35,9 @@ it('accepts a label prop', () => {
     propsData: defaultProps,
   });
 
-  expect(wrapper.vm.widgetParams.label).toBe('Free Shipping');
+  expect(wrapper.find('.ais-ToggleRefinement-labelText').text()).toBe(
+    'Free Shipping'
+  );
 });
 
 it('exposes send-event method for insights middleware', async () => {

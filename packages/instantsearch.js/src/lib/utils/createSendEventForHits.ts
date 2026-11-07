@@ -2,6 +2,7 @@ import { serializePayload } from './serializer';
 
 import type { InsightsEvent } from '../../middlewares/createInsightsMiddleware';
 import type { InstantSearch, Hit, EscapedHits } from '../../types';
+import type { AlgoliaSearchHelper } from 'algoliasearch-helper';
 
 type BuiltInSendEventForHits = (
   eventType: string,
@@ -29,15 +30,56 @@ function chunk<TItem>(arr: TItem[], chunkSize: number = 20): TItem[][] {
   return chunks;
 }
 
+type IndexedHit = { hit: Hit; index: number };
+type ObjectData = Record<string, any>;
+
+// search-insights stores a click's queryID per objectID to infer later
+// conversions, so one click event can't mix queryIDs.
+function chunkByQueryID(hits: IndexedHit[]): IndexedHit[][] {
+  const groups: IndexedHit[][] = [];
+  const groupIndexByQueryID: Record<string, number> = Object.create(null);
+  hits.forEach((indexedHit) => {
+    const key = indexedHit.hit.__queryID || '';
+    if (groupIndexByQueryID[key] === undefined) {
+      groupIndexByQueryID[key] = groups.length;
+      groups.push([]);
+    }
+    groups[groupIndexByQueryID[key]].push(indexedHit);
+  });
+  return groups.reduce<IndexedHit[][]>(
+    (acc, group) => acc.concat(chunk(group)),
+    []
+  );
+}
+
+// Splitting a conversion would duplicate its value, so mixed queryIDs go in
+// `objectData` instead.
+function addObjectQueryIDs(
+  hits: Hit[],
+  objectData: ObjectData[] | undefined
+): ObjectData[] | undefined {
+  const queryID = hits[0].__queryID;
+  if (hits.every((hit) => hit.__queryID === queryID)) {
+    return objectData;
+  }
+  return hits.map((hit, i) => {
+    const data = objectData ? objectData[i] : undefined;
+    if ((data && data.queryID) || !hit.__queryID) {
+      return data || {};
+    }
+    return { ...data, queryID: hit.__queryID };
+  });
+}
+
 export function _buildEventPayloadsForHits({
-  index,
+  helper,
   widgetType,
   methodName,
   args,
   instantSearchInstance,
 }: {
   widgetType: string;
-  index: string;
+  helper: AlgoliaSearchHelper;
   methodName: 'sendEvent' | 'bindEvent';
   args: any[];
   instantSearchInstance: InstantSearch;
@@ -81,13 +123,34 @@ export function _buildEventPayloadsForHits({
   if (hitsArray.length === 0) {
     return [];
   }
-  const queryID = hitsArray[0].__queryID;
-  const hitsChunks = chunk(hitsArray);
+  const indexedHits = hitsArray.map((hit, index) => ({ hit, index }));
+  // The Insights API rejects objectData that doesn't match objectIDs.
+  const objectData: ObjectData[] | undefined =
+    Array.isArray(additionalData.objectData) &&
+    additionalData.objectData.length === hitsArray.length
+      ? additionalData.objectData
+      : undefined;
+  // These overwrite the built payload, so it can't be split or annotated.
+  const callerShapesPayload =
+    Boolean(additionalData.queryID) ||
+    additionalData.objectIDs !== undefined ||
+    additionalData.positions !== undefined ||
+    (additionalData.objectData !== undefined && !objectData);
+  const indexedChunks =
+    eventType === 'click' && !callerShapesPayload
+      ? chunkByQueryID(indexedHits)
+      : chunk(indexedHits);
+  const hitsChunks = indexedChunks.map((batch) => batch.map(({ hit }) => hit));
   const objectIDsByChunk = hitsChunks.map((batch) =>
     batch.map((hit) => hit.objectID)
   );
   const positionsByChunk = hitsChunks.map((batch) =>
     batch.map((hit) => hit.__position)
+  );
+  const objectDataByChunk = indexedChunks.map((batch) =>
+    objectData && !callerShapesPayload
+      ? batch.map(({ index }) => objectData[index])
+      : undefined
   );
 
   if (eventType === 'view') {
@@ -101,7 +164,7 @@ export function _buildEventPayloadsForHits({
         eventType,
         payload: {
           eventName: eventName || 'Hits Viewed',
-          index,
+          index: helper.lastResults?.index || helper.state.index,
           objectIDs: objectIDsByChunk[i],
           ...additionalData,
         },
@@ -117,11 +180,12 @@ export function _buildEventPayloadsForHits({
         eventType,
         payload: {
           eventName: eventName || 'Hit Clicked',
-          index,
-          queryID,
+          index: helper.lastResults?.index || helper.state.index,
+          queryID: batch[0].__queryID,
           objectIDs: objectIDsByChunk[i],
           positions: positionsByChunk[i],
           ...additionalData,
+          ...(objectDataByChunk[i] && { objectData: objectDataByChunk[i] }),
         },
         hits: batch,
         eventModifier,
@@ -129,16 +193,21 @@ export function _buildEventPayloadsForHits({
     });
   } else if (eventType === 'conversion') {
     return hitsChunks.map((batch, i) => {
+      let conversionObjectData = objectDataByChunk[i];
+      if (!callerShapesPayload) {
+        conversionObjectData = addObjectQueryIDs(batch, conversionObjectData);
+      }
       return {
         insightsMethod: 'convertedObjectIDsAfterSearch',
         widgetType,
         eventType,
         payload: {
           eventName: eventName || 'Hit Converted',
-          index,
-          queryID,
+          index: helper.lastResults?.index || helper.state.index,
+          queryID: batch[0].__queryID,
           objectIDs: objectIDsByChunk[i],
           ...additionalData,
+          ...(conversionObjectData && { objectData: conversionObjectData }),
         },
         hits: batch,
         eventModifier,
@@ -155,11 +224,11 @@ export function _buildEventPayloadsForHits({
 
 export function createSendEventForHits({
   instantSearchInstance,
-  index,
+  helper,
   widgetType,
 }: {
   instantSearchInstance: InstantSearch;
-  index: string;
+  helper: AlgoliaSearchHelper;
   widgetType: string;
 }): SendEventForHits {
   let sentEvents: Record<InsightsEvent['eventType'], boolean> = {};
@@ -168,17 +237,19 @@ export function createSendEventForHits({
   const sendEventForHits: SendEventForHits = (...args: any[]) => {
     const payloads = _buildEventPayloadsForHits({
       widgetType,
-      index,
+      helper,
       methodName: 'sendEvent',
       args,
       instantSearchInstance,
     });
 
+    // Checked once per call: a click split by queryID isn't its own duplicate.
+    const clickAlreadySent = sentEvents.click;
     payloads.forEach((payload) => {
       if (
         payload.eventType === 'click' &&
         payload.eventModifier === 'internal' &&
-        sentEvents[payload.eventType]
+        clickAlreadySent
       ) {
         return;
       }
@@ -196,18 +267,18 @@ export function createSendEventForHits({
 }
 
 export function createBindEventForHits({
-  index,
+  helper,
   widgetType,
   instantSearchInstance,
 }: {
-  index: string;
+  helper: AlgoliaSearchHelper;
   widgetType: string;
   instantSearchInstance: InstantSearch;
 }): BindEventForHits {
   const bindEventForHits: BindEventForHits = (...args: any[]) => {
     const payloads = _buildEventPayloadsForHits({
       widgetType,
-      index,
+      helper,
       methodName: 'bindEvent',
       args,
       instantSearchInstance,

@@ -5,9 +5,11 @@ import { getIndexSearchResults } from '../lib/getIndexSearchResults';
 import { useIndexContext } from '../lib/useIndexContext';
 import { useInstantSearchContext } from '../lib/useInstantSearchContext';
 import { useInstantSearchServerContext } from '../lib/useInstantSearchServerContext';
+import { useInstantSearchSSRContext } from '../lib/useInstantSearchSSRContext';
 import { useStableValue } from '../lib/useStableValue';
 import { useWidget } from '../lib/useWidget';
 
+import type { SearchResults } from 'algoliasearch-helper';
 import type {
   Connector,
   UiState,
@@ -15,17 +17,24 @@ import type {
   WidgetDescription,
 } from 'instantsearch.js';
 
-export type AdditionalWidgetProperties = Partial<Widget<WidgetDescription>>;
+export type AdditionalWidgetProperties = Partial<Widget<WidgetDescription>> & {
+  skipSuspense?: boolean;
+  opensChat?: boolean;
+};
 
 export function useConnector<
   TProps extends Record<string, unknown>,
-  TDescription extends WidgetDescription
+  TDescription extends WidgetDescription,
 >(
   connector: Connector<TDescription, TProps>,
   props: TProps = {} as TProps,
-  additionalWidgetProperties: AdditionalWidgetProperties = {}
+  {
+    skipSuspense = false,
+    ...additionalWidgetProperties
+  }: AdditionalWidgetProperties = {}
 ): TDescription['renderState'] {
   const serverContext = useInstantSearchServerContext();
+  const ssrContext = useInstantSearchSSRContext();
   const search = useInstantSearchContext();
   const parentIndex = useIndexContext();
   const stableProps = useStableValue(props);
@@ -107,7 +116,8 @@ export function useConnector<
       helper.state =
         widget.getWidgetSearchParameters?.(helper.state, { uiState }) ||
         helper.state;
-      const { results, scopedResults } = getIndexSearchResults(parentIndex);
+      const { results, scopedResults, recommendResults } =
+        getIndexSearchResults(parentIndex);
 
       // We get the widget render state by providing the same parameters as
       // InstantSearch provides to the widget's `render` method.
@@ -116,7 +126,12 @@ export function useConnector<
         helper,
         parent: parentIndex,
         instantSearchInstance: search,
-        results,
+        results:
+          widget.dependsOn === 'recommend' && recommendResults && ssrContext
+            ? (recommendResults[
+                ssrContext.recommendIdx.current++
+              ] as unknown as SearchResults)
+            : results,
         scopedResults,
         state: helper.state,
         renderState: search.renderState,
@@ -138,8 +153,9 @@ export function useConnector<
   useWidget({
     widget,
     parentIndex,
-    props: stableProps,
+    props: [stableProps, stableAdditionalWidgetProperties],
     shouldSsr: Boolean(serverContext),
+    skipSuspense,
   });
 
   return state;

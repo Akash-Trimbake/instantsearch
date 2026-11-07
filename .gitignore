@@ -1,5 +1,12 @@
+# Local planning notes (Ralph-loop trackers, etc.)
+plans/
+
 # Dependencies
 node_modules/
+
+# Yarn — commit the release binary, ignore the rest
+.yarn/*
+!.yarn/releases
 
 # Build output
 /packages/instantsearch.js/dist
@@ -9,8 +16,11 @@ node_modules/
 /packages/vue-instantsearch/vue3
 dist/
 build/
+!scripts/build/
+!scripts/build/**
 
 # Generated files
+/architecture-refactor-runs/
 /docs
 /website/algoliasearch-helper-js/*
 /website/examples/*
@@ -30,9 +40,9 @@ scripts/*/CHANGELOG.md
 # private files
 .env
 .idea/
+.vscode/
 
 # Caches
-.eslintcache
 .parcel-cache
 .nuxt
 
@@ -41,6 +51,8 @@ integration/screenshots/
 junit
 /coverage
 junit.xml
+playwright-report/
+test-results/
 
 # User-specific files
 *.iml

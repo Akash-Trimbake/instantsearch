@@ -1,13 +1,14 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 import { runTestSuites } from '@instantsearch/tests';
 import * as suites from '@instantsearch/tests/connectors';
 import { act, render } from '@testing-library/react';
 import { connectRatingMenu } from 'instantsearch.js/es/connectors';
-import React from 'react';
+import React, { useState } from 'react';
 
 import {
+  Chat,
   InstantSearch,
   RefinementList,
   useRefinementList,
@@ -20,6 +21,13 @@ import {
   useConnector,
   useToggleRefinement,
   useCurrentRefinements,
+  useRelatedProducts,
+  useFrequentlyBoughtTogether,
+  useTrendingItems,
+  useTrendingFacets,
+  useLookingSimilar,
+  useFilterSuggestions,
+  useCompare,
 } from '..';
 
 import type {
@@ -32,6 +40,13 @@ import type {
   UsePaginationProps,
   UseRefinementListProps,
   UseToggleRefinementProps,
+  UseRelatedProductsProps,
+  UseFrequentlyBoughtTogetherProps,
+  UseTrendingItemsProps,
+  UseTrendingFacetsProps,
+  UseLookingSimilarProps,
+  UseFilterSuggestionsProps,
+  UseCompareProps,
 } from '..';
 import type { TestOptionsMap, TestSetupsMap } from '@instantsearch/tests';
 import type {
@@ -42,7 +57,7 @@ import type {
 type TestSuites = typeof suites;
 const testSuites: TestSuites = suites;
 
-const testSetups: TestSetupsMap<TestSuites> = {
+const testSetups: TestSetupsMap<TestSuites, 'react'> = {
   createRefinementListConnectorTests({ instantSearchOptions, widgetParams }) {
     function CustomRefinementList(props: UseRefinementListProps) {
       const { createURL, refine } = useRefinementList(props);
@@ -313,6 +328,262 @@ const testSetups: TestSetupsMap<TestSuites> = {
       </InstantSearch>
     );
   },
+  createRelatedProductsConnectorTests: ({
+    instantSearchOptions,
+    widgetParams,
+  }) => {
+    function CustomRelatedProducts(props: UseRelatedProductsProps) {
+      const { items } = useRelatedProducts(props);
+
+      return (
+        <ul>
+          {items.map((item) => (
+            <li key={item.objectID}>{item.objectID}</li>
+          ))}
+        </ul>
+      );
+    }
+
+    function App() {
+      const [visible, setVisible] = useState(true);
+      return (
+        <InstantSearch {...instantSearchOptions}>
+          {visible && <CustomRelatedProducts {...widgetParams} />}
+          <button onClick={() => setVisible(!visible)}>toggle</button>
+        </InstantSearch>
+      );
+    }
+
+    render(<App />);
+  },
+  createFrequentlyBoughtTogetherConnectorTests: ({
+    instantSearchOptions,
+    widgetParams,
+  }) => {
+    function CustomFrequentlyBoughtTogether(
+      props: UseFrequentlyBoughtTogetherProps
+    ) {
+      const { items } = useFrequentlyBoughtTogether(props);
+
+      return (
+        <ul>
+          {items.map((item) => (
+            <li key={item.objectID}>{item.objectID}</li>
+          ))}
+        </ul>
+      );
+    }
+
+    function App() {
+      const [visible, setVisible] = useState(true);
+      return (
+        <InstantSearch {...instantSearchOptions}>
+          {visible && <CustomFrequentlyBoughtTogether {...widgetParams} />}
+          <button onClick={() => setVisible(!visible)}>toggle</button>
+        </InstantSearch>
+      );
+    }
+
+    render(<App />);
+  },
+  createTrendingItemsConnectorTests: ({
+    instantSearchOptions,
+    widgetParams,
+  }) => {
+    function CustomTrendingItems(props: UseTrendingItemsProps) {
+      const { items } = useTrendingItems(props);
+
+      return (
+        <ul>
+          {items.map((item) => (
+            <li key={item.objectID}>{item.objectID}</li>
+          ))}
+        </ul>
+      );
+    }
+
+    function App() {
+      const [visible, setVisible] = useState(true);
+      return (
+        <InstantSearch {...instantSearchOptions}>
+          {visible && <CustomTrendingItems {...widgetParams} />}
+          <button onClick={() => setVisible(!visible)}>toggle</button>
+        </InstantSearch>
+      );
+    }
+
+    render(<App />);
+  },
+  createTrendingFacetsConnectorTests: ({
+    instantSearchOptions,
+    widgetParams,
+  }) => {
+    function CustomTrendingFacets(props: UseTrendingFacetsProps) {
+      const { items } = useTrendingFacets(props);
+
+      return (
+        <ul>
+          {items.map((item, i) => (
+            <li key={i}>{item.facetValue}</li>
+          ))}
+        </ul>
+      );
+    }
+
+    function App() {
+      const [visible, setVisible] = useState(true);
+      return (
+        <InstantSearch {...instantSearchOptions}>
+          {visible && <CustomTrendingFacets {...widgetParams} />}
+          <button onClick={() => setVisible(!visible)}>toggle</button>
+        </InstantSearch>
+      );
+    }
+
+    render(<App />);
+  },
+  createLookingSimilarConnectorTests: ({
+    instantSearchOptions,
+    widgetParams,
+  }) => {
+    function CustomLookingSimilar(props: UseLookingSimilarProps) {
+      const { items } = useLookingSimilar(props);
+
+      return (
+        <ul>
+          {items.map((item) => (
+            <li key={item.objectID}>{item.objectID}</li>
+          ))}
+        </ul>
+      );
+    }
+
+    function App() {
+      const [visible, setVisible] = useState(true);
+      return (
+        <InstantSearch {...instantSearchOptions}>
+          {visible && <CustomLookingSimilar {...widgetParams} />}
+          <button onClick={() => setVisible(!visible)}>toggle</button>
+        </InstantSearch>
+      );
+    }
+
+    render(<App />);
+  },
+  createChatConnectorTests: () => {},
+  createFilterSuggestionsConnectorTests: ({
+    instantSearchOptions,
+    widgetParams,
+  }) => {
+    function CustomFilterSuggestions(props: UseFilterSuggestionsProps) {
+      const { suggestions, refine, isLoading } = useFilterSuggestions(props);
+      useRefinementList({ attribute: 'brand' });
+
+      return (
+        <div data-testid="FilterSuggestions-root">
+          {isLoading && (
+            <div data-testid="FilterSuggestions-loading">Loading...</div>
+          )}
+          <ul data-testid="FilterSuggestions-list">
+            {suggestions.map((suggestion) => (
+              <li key={`${suggestion.attribute}-${suggestion.value}`}>
+                <button
+                  data-testid="FilterSuggestions-refine"
+                  onClick={() => refine(suggestion.attribute, suggestion.value)}
+                >
+                  {suggestion.label} ({suggestion.count})
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
+
+    render(
+      <InstantSearch {...instantSearchOptions}>
+        <CustomFilterSuggestions {...widgetParams} />
+      </InstantSearch>
+    );
+  },
+  createCompareConnectorTests: ({ instantSearchOptions, widgetParams }) => {
+    const {
+      products = [],
+      renderChat = true,
+      ...connectorParams
+    } = widgetParams;
+
+    function CustomCompare(props: UseCompareProps) {
+      const [result, setResult] = useState('');
+      const {
+        items,
+        isSelected,
+        addItem,
+        removeItem,
+        toggleItem,
+        clearItems,
+        canAddItems,
+        canCompare,
+        minItems,
+        maxItems,
+        compare,
+      } = useCompare(props);
+
+      return (
+        <div>
+          <ul>
+            {items.map((item) => (
+              <li
+                key={item.objectID}
+                data-testid="Compare-item"
+                data-object-id={item.objectID}
+              >
+                {item.objectID}
+              </li>
+            ))}
+          </ul>
+          <span data-testid="Compare-minItems">{minItems}</span>
+          <span data-testid="Compare-maxItems">{maxItems}</span>
+          <span data-testid="Compare-canAddItems">{String(canAddItems)}</span>
+          <span data-testid="Compare-canCompare">{String(canCompare)}</span>
+          {products.map((product) => (
+            <React.Fragment key={product.objectID}>
+              <button
+                data-testid={`Compare-add-${product.objectID}`}
+                onClick={() => addItem(product)}
+              />
+              <button
+                data-testid={`Compare-remove-${product.objectID}`}
+                onClick={() => removeItem(product.objectID)}
+              />
+              <button
+                data-testid={`Compare-toggle-${product.objectID}`}
+                aria-pressed={isSelected(product.objectID)}
+                onClick={() => toggleItem(product)}
+              />
+            </React.Fragment>
+          ))}
+          <button data-testid="Compare-clear" onClick={clearItems} />
+          <button
+            data-testid="Compare-compare"
+            onClick={() => setResult(String(compare()))}
+          />
+          <output data-testid="Compare-result">{result}</output>
+        </div>
+      );
+    }
+
+    render(
+      <InstantSearch {...instantSearchOptions}>
+        <CustomCompare {...connectorParams} />
+        {/*
+          A dedicated id: the `agentId` the chat suites use keys persisted
+          messages in `sessionStorage` that leak across tests in this file.
+        */}
+        {renderChat && <Chat agentId="compareChatAgentId" />}
+      </InstantSearch>
+    );
+  },
 };
 
 const testOptions: TestOptionsMap<TestSuites> = {
@@ -332,10 +603,19 @@ const testOptions: TestOptionsMap<TestSuites> = {
   createNumericMenuConnectorTests: { act },
   createRatingMenuConnectorTests: { act },
   createToggleRefinementConnectorTests: { act },
+  createRelatedProductsConnectorTests: { act },
+  createFrequentlyBoughtTogetherConnectorTests: { act },
+  createTrendingItemsConnectorTests: { act },
+  createTrendingFacetsConnectorTests: { act },
+  createLookingSimilarConnectorTests: { act },
+  createChatConnectorTests: { act, skippedTests: { options: true } },
+  createFilterSuggestionsConnectorTests: { act },
+  createCompareConnectorTests: { act },
 };
 
 describe('Common connector tests (React InstantSearch)', () => {
   runTestSuites({
+    flavor: 'react',
     testSuites,
     testSetups,
     testOptions,

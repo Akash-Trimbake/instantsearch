@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 /** @jsx h */
 import {
@@ -22,6 +22,45 @@ beforeEach(() => {
 });
 
 describe('stats', () => {
+  describe('options', () => {
+    test('throws without a `container`', () => {
+      expect(() => {
+        // @ts-expect-error
+        stats({ container: undefined });
+      }).toThrowErrorMatchingInlineSnapshot(`
+        "The \`container\` option is required.
+
+        See documentation: https://www.algolia.com/doc/api-reference/widgets/stats/js/"
+      `);
+    });
+
+    test('add custom CSS classes', async () => {
+      const container = document.createElement('div');
+      const searchClient = createSearchClient();
+
+      const search = instantsearch({
+        indexName: 'indexName',
+        searchClient,
+      });
+
+      search.addWidgets([
+        stats({
+          container,
+          cssClasses: {
+            root: 'ROOT',
+            text: 'TEXT',
+          },
+        }),
+      ]);
+
+      search.start();
+      await wait(0);
+
+      expect(container.querySelector('.ais-Stats')).toHaveClass('ROOT');
+      expect(container.querySelector('.ais-Stats-text')).toHaveClass('TEXT');
+    });
+  });
+
   describe('templates', () => {
     test('renders default templates', async () => {
       const container = document.createElement('div');
@@ -50,18 +89,27 @@ describe('stats', () => {
       await wait(0);
 
       expect(container).toMatchInlineSnapshot(`
-<div>
-  <div
-    class="ais-Stats"
-  >
-    <span
-      class="ais-Stats-text"
-    >
-      2 results found in 0ms
-    </span>
-  </div>
-</div>
-`);
+        <div>
+          <div
+            class="ais-Stats"
+          >
+            <span
+              class="ais-Stats-text"
+            >
+              2 results found in 0ms
+            </span>
+            <span
+              aria-atomic="true"
+              aria-live="polite"
+              class="ais-Stats-announcement"
+              role="status"
+              style="position: absolute; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border: 0px;"
+            >
+              
+            </span>
+          </div>
+        </div>
+      `);
 
       fireEvent.input(within(searchBoxContainer).getByRole('searchbox'), {
         target: { value: 'query with no results' },
@@ -70,18 +118,27 @@ describe('stats', () => {
       await wait(0);
 
       expect(container).toMatchInlineSnapshot(`
-<div>
-  <div
-    class="ais-Stats"
-  >
-    <span
-      class="ais-Stats-text"
-    >
-      No results found in 0ms
-    </span>
-  </div>
-</div>
-`);
+        <div>
+          <div
+            class="ais-Stats"
+          >
+            <span
+              class="ais-Stats-text"
+            >
+              No results found in 0ms
+            </span>
+            <span
+              aria-atomic="true"
+              aria-live="polite"
+              class="ais-Stats-announcement"
+              role="status"
+              style="position: absolute; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border: 0px;"
+            >
+              
+            </span>
+          </div>
+        </div>
+      `);
     });
 
     test('renders with templates using `html`', async () => {
@@ -119,29 +176,38 @@ describe('stats', () => {
       await wait(0);
 
       expect(container).toMatchInlineSnapshot(`
-<div>
-  <div
-    class="ais-Stats"
-  >
-    <span
-      class="ais-Stats-text"
-    >
-      <span>
-        <strong>
-          
-        </strong>
-         returned 
-        2
-        result
-        s
-         found in
-        0
-        ms
-      </span>
-    </span>
-  </div>
-</div>
-`);
+        <div>
+          <div
+            class="ais-Stats"
+          >
+            <span
+              class="ais-Stats-text"
+            >
+              <span>
+                <strong>
+                  
+                </strong>
+                 returned 
+                2
+                result
+                s
+                 found in
+                0
+                ms
+              </span>
+            </span>
+            <span
+              aria-atomic="true"
+              aria-live="polite"
+              class="ais-Stats-announcement"
+              role="status"
+              style="position: absolute; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border: 0px;"
+            >
+              
+            </span>
+          </div>
+        </div>
+      `);
 
       fireEvent.input(within(searchBoxContainer).getByRole('searchbox'), {
         target: { value: 'query with no results' },
@@ -150,20 +216,29 @@ describe('stats', () => {
       await wait(0);
 
       expect(container).toMatchInlineSnapshot(`
-<div>
-  <div
-    class="ais-Stats"
-  >
-    <span
-      class="ais-Stats-text"
-    >
-      <span>
-        No results
-      </span>
-    </span>
-  </div>
-</div>
-`);
+        <div>
+          <div
+            class="ais-Stats"
+          >
+            <span
+              class="ais-Stats-text"
+            >
+              <span>
+                No results
+              </span>
+            </span>
+            <span
+              aria-atomic="true"
+              aria-live="polite"
+              class="ais-Stats-announcement"
+              role="status"
+              style="position: absolute; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border: 0px;"
+            >
+              
+            </span>
+          </div>
+        </div>
+      `);
     });
 
     test('renders with templates using JSX', async () => {
@@ -203,29 +278,38 @@ describe('stats', () => {
       await wait(0);
 
       expect(container).toMatchInlineSnapshot(`
-<div>
-  <div
-    class="ais-Stats"
-  >
-    <span
-      class="ais-Stats-text"
-    >
-      <span>
-        <strong>
-          
-        </strong>
-         returned 
-        2
-        result
-        s
-         found in
-        0
-        ms
-      </span>
-    </span>
-  </div>
-</div>
-`);
+        <div>
+          <div
+            class="ais-Stats"
+          >
+            <span
+              class="ais-Stats-text"
+            >
+              <span>
+                <strong>
+                  
+                </strong>
+                 returned 
+                2
+                result
+                s
+                 found in
+                0
+                ms
+              </span>
+            </span>
+            <span
+              aria-atomic="true"
+              aria-live="polite"
+              class="ais-Stats-announcement"
+              role="status"
+              style="position: absolute; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border: 0px;"
+            >
+              
+            </span>
+          </div>
+        </div>
+      `);
 
       fireEvent.input(within(searchBoxContainer).getByRole('searchbox'), {
         target: { value: 'query with no results' },
@@ -234,20 +318,29 @@ describe('stats', () => {
       await wait(0);
 
       expect(container).toMatchInlineSnapshot(`
-<div>
-  <div
-    class="ais-Stats"
-  >
-    <span
-      class="ais-Stats-text"
-    >
-      <span>
-        No results
-      </span>
-    </span>
-  </div>
-</div>
-`);
+        <div>
+          <div
+            class="ais-Stats"
+          >
+            <span
+              class="ais-Stats-text"
+            >
+              <span>
+                No results
+              </span>
+            </span>
+            <span
+              aria-atomic="true"
+              aria-live="polite"
+              class="ais-Stats-announcement"
+              role="status"
+              style="position: absolute; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; border: 0px;"
+            >
+              
+            </span>
+          </div>
+        </div>
+      `);
     });
 
     type CustomHit = { name: string; description: string };

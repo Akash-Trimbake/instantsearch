@@ -3,6 +3,972 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [4.32.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.31.0...vue-instantsearch@4.32.0) (2026-11-03)
+
+
+### Bug Fixes
+
+* **chat:** keep the Vue Chat widget when the parent re-renders with inline props ([#7328](https://github.com/algolia/instantsearch/issues/7328)) ([794bad6](https://github.com/algolia/instantsearch/commit/794bad6f737f6095727faf1219c85c8cec7c197f))
+* **vue:** read the latest chat input when submitting from a custom prompt ([#7344](https://github.com/algolia/instantsearch/issues/7344)) ([0e42793](https://github.com/algolia/instantsearch/commit/0e42793347c0d73f46cd966245e6c69bef0eb91d))
+
+
+### Features
+
+* **chat:** add accessible names to the launcher and carousel buttons ([#7332](https://github.com/algolia/instantsearch/issues/7332)) ([7780406](https://github.com/algolia/instantsearch/commit/7780406c56c96b1d2287a38b5e26dce9229da720))
+* **vue:** add CompareBar and ResultCard, with common tests [FX-4089] ([#7340](https://github.com/algolia/instantsearch/issues/7340)) ([1598f50](https://github.com/algolia/instantsearch/commit/1598f5096266c4c8ad7e9ff92da7892ddb664f6d))
+
+
+
+
+
+# [4.31.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.30.1...vue-instantsearch@4.31.0) (2026-10-26)
+
+
+### Features
+
+* **autocomplete:** add Autocomplete components to Vue ([#7310](https://github.com/algolia/instantsearch/issues/7310)) ([22a9a88](https://github.com/algolia/instantsearch/commit/22a9a88110d050c829f47be01cfa0e7e908e5e4b))
+* **chat:** add Chat + ChatTrigger widgets to Vue (phase 1) ([#7130](https://github.com/algolia/instantsearch/issues/7130)) ([12a5b25](https://github.com/algolia/instantsearch/commit/12a5b25e6115c75e5c1be0c3e118776356c1af94))
+* **frequentlyBoughtTogether:** add FrequentlyBoughtTogether to Vue ([#7128](https://github.com/algolia/instantsearch/issues/7128)) ([0cfa3e7](https://github.com/algolia/instantsearch/commit/0cfa3e75a4cce66fc4362c3d828099284d64ca63))
+* **recommend:** add LookingSimilar, TrendingItems, TrendingFacets to Vue ([#7129](https://github.com/algolia/instantsearch/issues/7129)) ([db46c89](https://github.com/algolia/instantsearch/commit/db46c8905a226ebe5c81fcac25e88bb0aff3e174))
+* **relatedProducts:** add RelatedProducts to Vue + hook-based UI infra ([#7127](https://github.com/algolia/instantsearch/issues/7127)) ([ca8e968](https://github.com/algolia/instantsearch/commit/ca8e968bb270630880565598b6320e8652ec4a7e)), closes [#7137](https://github.com/algolia/instantsearch/issues/7137)
+
+
+
+
+
+## [4.30.1](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.30.0...vue-instantsearch@4.30.1) (2026-10-12)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.30.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.29.11...vue-instantsearch@4.30.0) (2026-10-01)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+## [4.29.11](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.29.10...vue-instantsearch@4.29.11) (2026-09-29)
+
+
+### Bug Fixes
+
+* **search:** deduplicate identical queries ([#7255](https://github.com/algolia/instantsearch/issues/7255)) ([79427b5](https://github.com/algolia/instantsearch/commit/79427b559d803364599958a8729130141ca9c65e)), closes [#6795](https://github.com/algolia/instantsearch/issues/6795)
+
+
+
+
+
+## [4.29.10](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.29.9...vue-instantsearch@4.29.10) (2026-09-22)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.29.9](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.29.8...vue-instantsearch@4.29.9) (2026-09-15)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.29.8](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.29.7...vue-instantsearch@4.29.8) (2026-09-03)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.29.7](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.29.6...vue-instantsearch@4.29.7) (2026-09-01)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.29.6](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.29.5...vue-instantsearch@4.29.6) (2026-08-31)
+
+
+### Bug Fixes
+
+* **index:** keep widget uiState when its parameters change ([#7206](https://github.com/algolia/instantsearch/issues/7206)) ([2afe171](https://github.com/algolia/instantsearch/commit/2afe171a896adcfacdd3ba5f52dc73972cce75e5)), closes [#7201](https://github.com/algolia/instantsearch/issues/7201) [#6635](https://github.com/algolia/instantsearch/issues/6635)
+
+
+
+
+
+## [4.29.5](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.29.4...vue-instantsearch@4.29.5) (2026-08-24)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.29.4](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.29.3...vue-instantsearch@4.29.4) (2026-08-19)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.29.3](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.29.2...vue-instantsearch@4.29.3) (2026-08-13)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.29.2](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.29.1...vue-instantsearch@4.29.2) (2026-08-12)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.29.1](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.29.0...vue-instantsearch@4.29.1) (2026-08-10)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+# [4.29.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.28.1...vue-instantsearch@4.29.0) (2026-08-06)
+
+
+### Features
+
+* **agent studio:** add prompt suggestions widget ([#7054](https://github.com/algolia/instantsearch/issues/7054)) ([0eb1ca7](https://github.com/algolia/instantsearch/commit/0eb1ca7eb7fd90faf428b0bbe553cbefe327ea97))
+
+
+
+
+
+## [4.28.1](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.28.0...vue-instantsearch@4.28.1) (2026-07-23)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+# [4.28.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.27.1...vue-instantsearch@4.28.0) (2026-07-21)
+
+
+### Features
+
+* allow chat and autocomplete to opt out of main search ([#7111](https://github.com/algolia/instantsearch/issues/7111)) ([997a511](https://github.com/algolia/instantsearch/commit/997a511f7ca034c92fcc53bd707c6448cf1bfdcf))
+
+
+
+
+
+## [4.27.1](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.27.0...vue-instantsearch@4.27.1) (2026-07-14)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+# [4.27.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.26.11...vue-instantsearch@4.27.0) (2026-07-07)
+
+
+### Bug Fixes
+
+* **pagination:** mark the current page with aria-current ([#7103](https://github.com/algolia/instantsearch/issues/7103)) ([f3db948](https://github.com/algolia/instantsearch/commit/f3db948b884e64c1b121fbb3801b10959ddb07ea)), closes [#7098](https://github.com/algolia/instantsearch/issues/7098)
+* **refinement-list:** expose show more/less state via aria-expanded ([#7102](https://github.com/algolia/instantsearch/issues/7102)) ([7d82c2f](https://github.com/algolia/instantsearch/commit/7d82c2f101b4a69b3d613d9cfb9be44e0881a4ea)), closes [#7098](https://github.com/algolia/instantsearch/issues/7098)
+* **searchbox:** give submit and reset buttons a reliable accessible name ([#7100](https://github.com/algolia/instantsearch/issues/7100)) ([59aba4f](https://github.com/algolia/instantsearch/commit/59aba4f7cf422e814ac3df35fbe8eada434ef30a)), closes [#7098](https://github.com/algolia/instantsearch/issues/7098) [#7098](https://github.com/algolia/instantsearch/issues/7098)
+
+
+### Features
+
+* **refinement-list:** allow a custom accessible name for the show more button ([#7101](https://github.com/algolia/instantsearch/issues/7101)) ([cf04cb7](https://github.com/algolia/instantsearch/commit/cf04cb758b7e2ba2c8e0c07c9ec8157491bcaee5)), closes [#7098](https://github.com/algolia/instantsearch/issues/7098)
+* **stats:** announce result changes to screen readers ([#7099](https://github.com/algolia/instantsearch/issues/7099)) ([0821eb8](https://github.com/algolia/instantsearch/commit/0821eb846b9bbf6ec3740b39050798eaec133855)), closes [#7098](https://github.com/algolia/instantsearch/issues/7098)
+
+
+
+
+
+## [4.26.11](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.26.9...vue-instantsearch@4.26.11) (2026-06-30)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.26.10](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.26.9...vue-instantsearch@4.26.10) (2026-06-25)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.26.9](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.26.8...vue-instantsearch@4.26.9) (2026-06-19)
+
+
+### Bug Fixes
+
+* **range-slider:** make handles keyboard-movable without snap points ([#7071](https://github.com/algolia/instantsearch/issues/7071)) ([55bd627](https://github.com/algolia/instantsearch/commit/55bd627dbacabd538b92aa1c8654ec3631e59ece))
+
+
+
+
+
+## [4.26.8](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.26.7...vue-instantsearch@4.26.8) (2026-06-09)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.26.7](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.26.6...vue-instantsearch@4.26.7) (2026-06-03)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.26.6](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.26.5...vue-instantsearch@4.26.6) (2026-06-02)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.26.5](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.26.4...vue-instantsearch@4.26.5) (2026-05-26)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.26.4](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.26.3...vue-instantsearch@4.26.4) (2026-05-19)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.26.3](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.26.2...vue-instantsearch@4.26.3) (2026-05-12)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.26.1](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.26.0...vue-instantsearch@4.26.1) (2026-05-05)
+
+
+### Bug Fixes
+
+* **feeds:** rename searchScope to isolated ([#7013](https://github.com/algolia/instantsearch/issues/7013)) ([8c43f3a](https://github.com/algolia/instantsearch/commit/8c43f3a4741ebbf52a331fa3f65006d4d0695df7))
+
+
+
+
+
+# [4.26.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.25.1...vue-instantsearch@4.26.0) (2026-05-05)
+
+
+### Features
+
+* **composition:** add Feeds widget to support multifeed ([#7004](https://github.com/algolia/instantsearch/issues/7004)) ([ecc40d9](https://github.com/algolia/instantsearch/commit/ecc40d98dd19922b510dd3d769fc490519cede64)), closes [#6954](https://github.com/algolia/instantsearch/issues/6954)
+
+
+
+
+
+## [4.25.1](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.25.0...vue-instantsearch@4.25.1) (2026-04-28)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+# [4.25.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.24.4...vue-instantsearch@4.25.0) (2026-04-21)
+
+
+### Features
+
+* **recommend:** add Trending Facets widget ([#6957](https://github.com/algolia/instantsearch/issues/6957)) ([7a4b137](https://github.com/algolia/instantsearch/commit/7a4b137264b5814bc21d9011bab877e9661729c9))
+* **widgets:** ensure all widgets are available from UMD ([#6960](https://github.com/algolia/instantsearch/issues/6960)) ([3c3dbad](https://github.com/algolia/instantsearch/commit/3c3dbad3c169b6330690b628e03531f0d57e60f0))
+
+
+
+
+
+## [4.24.4](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.24.3...vue-instantsearch@4.24.4) (2026-03-31)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.24.3](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.24.2...vue-instantsearch@4.24.3) (2026-03-24)
+
+
+### Bug Fixes
+
+* **vue:** avoid side-effects ([#6935](https://github.com/algolia/instantsearch/issues/6935)) ([6bef6ec](https://github.com/algolia/instantsearch/commit/6bef6ecb23f0a62ae7ec1529e7954c5d948df55d)), closes [#6932](https://github.com/algolia/instantsearch/issues/6932)
+
+
+
+
+
+## [4.24.2](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.24.1...vue-instantsearch@4.24.2) (2026-03-16)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.24.1](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.24.0...vue-instantsearch@4.24.1) (2026-03-10)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+# [4.24.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.23.4...vue-instantsearch@4.24.0) (2026-02-25)
+
+
+### Features
+
+* **build:** unify build system across monorepo ([#6886](https://github.com/algolia/instantsearch/issues/6886)) ([e8b2ef7](https://github.com/algolia/instantsearch/commit/e8b2ef7dc1b7d98f1ee5518fad7607b5f31bbd96))
+
+
+
+
+
+## [4.23.4](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.23.3...vue-instantsearch@4.23.4) (2026-02-24)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.23.3](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.23.2...vue-instantsearch@4.23.3) (2026-02-17)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.23.2](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.23.1...vue-instantsearch@4.23.2) (2026-02-10)
+
+
+### Bug Fixes
+
+* **composition:** forwards parameters in sffv ([#6889](https://github.com/algolia/instantsearch/issues/6889)) ([f908559](https://github.com/algolia/instantsearch/commit/f9085591ebb71d8f56f580c94d6afb7ccbeb5475)), closes [/github.com/algolia/instantsearch/pull/6792/changes#diff-6af3d106c335b51f0e85d49f808b248a9704cb12dab1472606b6e9a383d981b1](https://github.com//github.com/algolia/instantsearch/pull/6792/changes/issues/diff-6af3d106c335b51f0e85d49f808b248a9704cb12dab1472606b6e9a383d981b1) [/github.com/algolia/instantsearch/blob/59f8fbf1a70262ab0927f5fdcde5c3ecbd10e3ba/packages/instantsearch.js/src/lib/InstantSearch.ts#L580-L583](https://github.com//github.com/algolia/instantsearch/blob/59f8fbf1a70262ab0927f5fdcde5c3ecbd10e3ba/packages/instantsearch.js/src/lib/InstantSearch.ts/issues/L580-L583)
+
+
+
+
+
+## [4.23.1](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.23.0...vue-instantsearch@4.23.1) (2026-02-03)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+# [4.23.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.22.8...vue-instantsearch@4.23.0) (2026-01-27)
+
+
+### Features
+
+* add `FilterSuggestions` widget ([#6861](https://github.com/algolia/instantsearch/issues/6861)) ([3ff224f](https://github.com/algolia/instantsearch/commit/3ff224f0c0823c47ace52306ad810a98231a8f83))
+
+
+
+
+
+## [4.22.8](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.22.7...vue-instantsearch@4.22.8) (2025-12-31)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.22.7](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.22.6...vue-instantsearch@4.22.7) (2025-12-30)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.22.6](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.22.5...vue-instantsearch@4.22.6) (2025-12-10)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.22.5](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.22.4...vue-instantsearch@4.22.5) (2025-12-09)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.22.4](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.22.3...vue-instantsearch@4.22.4) (2025-12-02)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.22.3](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.22.2...vue-instantsearch@4.22.3) (2025-11-18)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.22.2](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.22.1...vue-instantsearch@4.22.2) (2025-11-10)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.22.1](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.22.0...vue-instantsearch@4.22.1) (2025-11-06)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+# [4.22.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.21.3...vue-instantsearch@4.22.0) (2025-10-23)
+
+
+### Features
+
+* **instantsearch.js:** introduce chat widget ([#6705](https://github.com/algolia/instantsearch/issues/6705)) ([d7b360b](https://github.com/algolia/instantsearch/commit/d7b360b0a2d18e3eae42bf89ffae87f10142d0c1))
+
+
+
+
+
+## [4.21.3](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.21.2...vue-instantsearch@4.21.3) (2025-09-09)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.21.2](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.21.1...vue-instantsearch@4.21.2) (2025-07-22)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.21.1](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.21.0...vue-instantsearch@4.21.1) (2025-07-08)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+# [4.21.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.20.8...vue-instantsearch@4.21.0) (2025-06-16)
+
+
+### Bug Fixes
+
+* **breadcrumb:** use hierarchical facets only ([#6645](https://github.com/algolia/instantsearch/issues/6645)) ([c9e50d9](https://github.com/algolia/instantsearch/commit/c9e50d9230426c13fd68cf08b0004fc7e19147ce))
+
+
+### Features
+
+* **refinementList:** add option to disable selecting on searchbox submit ([#6649](https://github.com/algolia/instantsearch/issues/6649)) ([8b9fae6](https://github.com/algolia/instantsearch/commit/8b9fae67738fec4aaf2a2dad93910be9d89ac69b))
+
+
+
+
+
+## [4.20.8](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.20.7...vue-instantsearch@4.20.8) (2025-05-06)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.20.7](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.20.6...vue-instantsearch@4.20.7) (2025-04-29)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.20.6](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.20.5...vue-instantsearch@4.20.6) (2025-03-18)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.20.5](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.20.4...vue-instantsearch@4.20.5) (2025-03-04)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.20.4](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.20.3...vue-instantsearch@4.20.4) (2025-01-28)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.20.3](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.20.2...vue-instantsearch@4.20.3) (2025-01-28)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.20.2](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.20.1...vue-instantsearch@4.20.2) (2025-01-21)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.20.1](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.20.0...vue-instantsearch@4.20.1) (2025-01-16)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+# [4.20.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.19.13...vue-instantsearch@4.20.0) (2025-01-14)
+
+
+### Features
+
+* composition ([#6437](https://github.com/algolia/instantsearch/issues/6437)) ([cee83ab](https://github.com/algolia/instantsearch/commit/cee83ab4473dc738dda7c6d928ebed88e3ec4c8d))
+
+
+
+
+
+## [4.19.13](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.19.12...vue-instantsearch@4.19.13) (2025-01-07)
+
+
+### Bug Fixes
+
+* **storybook:** update algoliasearch import statement in vue stories ([#6483](https://github.com/algolia/instantsearch/issues/6483)) ([3215f76](https://github.com/algolia/instantsearch/commit/3215f768489e2e9fc39eec68c3c966846a5d7521))
+
+
+
+
+
+## [4.19.12](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.19.11...vue-instantsearch@4.19.12) (2024-12-09)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.19.11](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.19.10...vue-instantsearch@4.19.11) (2024-11-14)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.19.10](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.19.9...vue-instantsearch@4.19.10) (2024-11-05)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.19.9](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.19.8...vue-instantsearch@4.19.9) (2024-10-24)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.19.8](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.19.7...vue-instantsearch@4.19.8) (2024-10-22)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.19.7](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.19.6...vue-instantsearch@4.19.7) (2024-10-15)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.19.6](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.19.5...vue-instantsearch@4.19.6) (2024-10-08)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.19.5](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.19.4...vue-instantsearch@4.19.5) (2024-09-24)
+
+
+### Bug Fixes
+
+* **links:** ensure cmd-click always opens in new tab ([#5994](https://github.com/algolia/instantsearch/issues/5994)) ([1109091](https://github.com/algolia/instantsearch/commit/1109091cb090e25bb9871c9105cfc16cfe5501e5))
+
+
+
+
+
+## [4.19.4](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.19.3...vue-instantsearch@4.19.4) (2024-09-10)
+
+
+### Bug Fixes
+
+* **flavors:** remove mentions of angular instantsearch ([#6341](https://github.com/algolia/instantsearch/issues/6341)) ([735e8d1](https://github.com/algolia/instantsearch/commit/735e8d1bc32e5532258a5551b11650b8362013b4))
+
+
+
+
+
+## [4.19.3](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.19.2...vue-instantsearch@4.19.3) (2024-08-20)
+
+
+### Bug Fixes
+
+* **client:** support v5 fully ([#6270](https://github.com/algolia/instantsearch/issues/6270)) ([c3b5e80](https://github.com/algolia/instantsearch/commit/c3b5e80bbb449acb3b9719a7449c6c926d034e34)), closes [#6271](https://github.com/algolia/instantsearch/issues/6271) [#6286](https://github.com/algolia/instantsearch/issues/6286)
+
+
+
+
+
+## [4.19.2](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.19.1...vue-instantsearch@4.19.2) (2024-08-06)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.19.1](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.19.0...vue-instantsearch@4.19.1) (2024-07-30)
+
+
+### Bug Fixes
+
+* **imports:** prevent circular import ([#6294](https://github.com/algolia/instantsearch/issues/6294)) ([25fc44f](https://github.com/algolia/instantsearch/commit/25fc44fe113c9bea10c57529a4fc2d16f2c4d18c)), closes [#6292](https://github.com/algolia/instantsearch/issues/6292)
+
+
+
+
+
+# [4.19.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.18.1...vue-instantsearch@4.19.0) (2024-07-16)
+
+
+### Bug Fixes
+
+* **cache:** support multi-index and multiple queries per index ([#6275](https://github.com/algolia/instantsearch/issues/6275)) ([60c3f20](https://github.com/algolia/instantsearch/commit/60c3f2066bc24d7af7884094b3f7293bf77d5d2a))
+* **vue2:** `augmentedCreateElement` should pass HTML attributes ([#6282](https://github.com/algolia/instantsearch/issues/6282)) ([e0d4c68](https://github.com/algolia/instantsearch/commit/e0d4c682bdcc485973d20363db82db2cf587e8c2))
+
+
+### Features
+
+* **infinite-hits:** add banners to vue flavor ([#6281](https://github.com/algolia/instantsearch/issues/6281)) ([6022197](https://github.com/algolia/instantsearch/commit/602219719e06360625b1caa8d1f10f3ad0595cdd))
+
+
+
+
+
+## [4.18.1](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.18.0...vue-instantsearch@4.18.1) (2024-07-09)
+
+
+### Bug Fixes
+
+* **algoliasearch:** correctly retrieve headers for v5 ([#6268](https://github.com/algolia/instantsearch/issues/6268)) ([25c72cf](https://github.com/algolia/instantsearch/commit/25c72cf2f1957b72dc237b32a8a73a006753d5e1))
+
+
+
+
+
+# [4.18.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.17.5...vue-instantsearch@4.18.0) (2024-07-02)
+
+
+### Features
+
+* **infinite-hits:** add top banner to InfiniteHits widget ([#6243](https://github.com/algolia/instantsearch/issues/6243)) ([9287532](https://github.com/algolia/instantsearch/commit/9287532ec277da963cfddcff82f46bec50ad9a14))
+
+
+
+
+
+## [4.17.5](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.17.4...vue-instantsearch@4.17.5) (2024-06-20)
+
+
+### Bug Fixes
+
+* **helper:** don't send empty "tagRefinements" and "facets" parameters ([#6204](https://github.com/algolia/instantsearch/issues/6204)) ([fb7cc23](https://github.com/algolia/instantsearch/commit/fb7cc23acfaad55579032587a4222647e240838b))
+
+
+
+
+
+## [4.17.4](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.17.3...vue-instantsearch@4.17.4) (2024-06-18)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.17.3](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.17.2...vue-instantsearch@4.17.3) (2024-06-05)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.17.2](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.17.1...vue-instantsearch@4.17.2) (2024-06-04)
+
+
+### Bug Fixes
+
+* **hits:** rename the exposed "hits" to "items" ([#6212](https://github.com/algolia/instantsearch/issues/6212)) ([1b99e39](https://github.com/algolia/instantsearch/commit/1b99e3951345a4054c6ff302dc09dd901bec984d))
+
+
+
+
+
+## [4.17.1](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.17.0...vue-instantsearch@4.17.1) (2024-05-28)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+# [4.17.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.16.2...vue-instantsearch@4.17.0) (2024-05-21)
+
+
+### Features
+
+* **recommend:** introduce `connectLookingSimilar` connector ([#6180](https://github.com/algolia/instantsearch/issues/6180)) ([78a7723](https://github.com/algolia/instantsearch/commit/78a772329de7958fe3bfcff8014c1a9e3c5c6764))
+* **recommend:** introduce `connectRelatedProducts` connector ([#6142](https://github.com/algolia/instantsearch/issues/6142)) ([89c4409](https://github.com/algolia/instantsearch/commit/89c44091ac69245ea5b2fe5b5e38efbaf10f8c69))
+* **recommend:** introduce `connectTrendingItems` connector ([#6169](https://github.com/algolia/instantsearch/issues/6169)) ([fa165ab](https://github.com/algolia/instantsearch/commit/fa165abd5a3b4b23121f4d752e46ad1141960591))
+* **recommend:** introduce `lookingSimilar` widget ([#6183](https://github.com/algolia/instantsearch/issues/6183)) ([6fae57c](https://github.com/algolia/instantsearch/commit/6fae57c96fdb96bf65d1ab1754ff18803f19929f))
+* **recommend:** introduce `relatedProducts` widget ([#6154](https://github.com/algolia/instantsearch/issues/6154)) ([b8602af](https://github.com/algolia/instantsearch/commit/b8602afc042ec28158cdd70e12a01630adce11fa))
+* **recommend:** introduce `trendingItems` widget ([#6171](https://github.com/algolia/instantsearch/issues/6171)) ([fdbd8ce](https://github.com/algolia/instantsearch/commit/fdbd8ce59bb4d319168bacf064100a59f9f029b6))
+
+
+
+
+
+## [4.16.2](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.16.1...vue-instantsearch@4.16.2) (2024-05-07)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.16.1](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.16.0...vue-instantsearch@4.16.1) (2024-04-30)
+
+
+### Bug Fixes
+
+* **vue:** avoid passing a proxied object in Configure ([#6166](https://github.com/algolia/instantsearch/issues/6166)) ([93cfd60](https://github.com/algolia/instantsearch/commit/93cfd60f4a4e9517ec942faf8b8e349041e260cb))
+* **vue:** handle multiple children arguments for createElement ([0c99ded](https://github.com/algolia/instantsearch/commit/0c99ded7c4577b8f40b38391c8c10233b42ea948))
+
+
+
+
+
+# [4.16.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.15.0...vue-instantsearch@4.16.0) (2024-04-18)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+# [4.15.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.14.0...vue-instantsearch@4.15.0) (2024-04-02)
+
+
+### Bug Fixes
+
+* **vue-instantsearch:** only render list in `<refinement-list>` when it has items ([#6092](https://github.com/algolia/instantsearch/issues/6092)) ([9a38de0](https://github.com/algolia/instantsearch/commit/9a38de0851a1b1e245e3b5af12b96da25fb24e72))
+* **vue-instantsearch:** properly add `noRefinement` class on `<ais-refinement-list>` ([#6095](https://github.com/algolia/instantsearch/issues/6095)) ([9ae7c05](https://github.com/algolia/instantsearch/commit/9ae7c05ef6d17bd1d945dc1d31c7d87a262d1e06))
+
+
+### Features
+
+* **vue-instantsearch:** render loading indicator in `<ais-refinement-list>` ([#6096](https://github.com/algolia/instantsearch/issues/6096)) ([830f39e](https://github.com/algolia/instantsearch/commit/830f39e0b9855913e726c98662a4eb3af35f9c59))
+
+
+
+
+
+# [4.14.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.13.8...vue-instantsearch@4.14.0) (2024-02-27)
+
+
+### Features
+
+* **ui-components:** migrate `Hits` component ([#6042](https://github.com/algolia/instantsearch/issues/6042)) ([55d550e](https://github.com/algolia/instantsearch/commit/55d550eb1030a3b2091917b1a84d280a73a28a3a))
+* use shared highlight component in vue3 ([#6051](https://github.com/algolia/instantsearch/issues/6051)) ([2974343](https://github.com/algolia/instantsearch/commit/29743437f769a000f9add89f7934fee68ae0425f))
+
+
+
+
+
+## [4.13.8](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.13.7...vue-instantsearch@4.13.8) (2024-02-13)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.13.7](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.13.6...vue-instantsearch@4.13.7) (2024-02-06)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.13.6](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.13.5...vue-instantsearch@4.13.6) (2024-01-30)
+
+
+### Bug Fixes
+
+* **searchbox:** ignore composition events with option ([#6009](https://github.com/algolia/instantsearch/issues/6009)) ([7d82b01](https://github.com/algolia/instantsearch/commit/7d82b0198f0b22c753bff012a0edf667b7e40be7))
+* **vue-compat:** Ensure getDefaultSlots works with @vue/compat & Vue 3 ([#6016](https://github.com/algolia/instantsearch/issues/6016)) ([e270069](https://github.com/algolia/instantsearch/commit/e270069c3533b56cfc3011d1aeadce89fd3654cb))
+
+
+
+
+
+## [4.13.5](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.13.4...vue-instantsearch@4.13.5) (2024-01-23)
+
+
+### Bug Fixes
+
+* **hydration:** generate cache with search parameters from server-side request ([#5991](https://github.com/algolia/instantsearch/issues/5991)) ([968cf43](https://github.com/algolia/instantsearch/commit/968cf433511eb172acee8eaf6a7c90740f7ee0a6))
+
+
+
+
+
+## [4.13.4](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.13.3...vue-instantsearch@4.13.4) (2024-01-16)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+## [4.13.3](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.13.2...vue-instantsearch@4.13.3) (2024-01-16)
+
+
+### Bug Fixes
+
+* **RatingMenu/RefinementList:** handle clicks in svg ([#5993](https://github.com/algolia/instantsearch/issues/5993)) ([a6698f5](https://github.com/algolia/instantsearch/commit/a6698f5db33a6e18733aa8861e38491aef793c15))
+
+
+
+
+
+## [4.13.2](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.13.1...vue-instantsearch@4.13.2) (2023-12-19)
+
+
+### Bug Fixes
+
+* **searchbox:** only refine if composition ended when using an IME ([#5963](https://github.com/algolia/instantsearch/issues/5963)) ([0820455](https://github.com/algolia/instantsearch/commit/0820455ad291fb3e1910ebdfbcfa8d18eb811d31))
+
+
+
+
+
+## [4.13.1](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.13.0...vue-instantsearch@4.13.1) (2023-12-07)
+
+**Note:** Version bump only for package vue-instantsearch
+
+
+
+
+
+# [4.13.0](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.12.1...vue-instantsearch@4.13.0) (2023-11-28)
+
+
+### Bug Fixes
+
+* **createURL:** ensure refined value gets removed ([#5912](https://github.com/algolia/instantsearch/issues/5912)) ([77919a9](https://github.com/algolia/instantsearch/commit/77919a92ede2dac7420c16f7743567e550e7cdac))
+
+
+### Features
+
+* **stats:** add common test suite ([#5931](https://github.com/algolia/instantsearch/issues/5931)) ([16e9b34](https://github.com/algolia/instantsearch/commit/16e9b3440a75d2d559fbeadfbcc4778be3212c63))
+
+
+
+
+
 ## [4.12.1](https://github.com/algolia/instantsearch/compare/vue-instantsearch@4.12.0...vue-instantsearch@4.12.1) (2023-10-31)
 
 ### Features

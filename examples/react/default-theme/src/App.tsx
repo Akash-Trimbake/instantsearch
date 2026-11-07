@@ -1,4 +1,4 @@
-import algoliasearch from 'algoliasearch/lite';
+import { liteClient as algoliasearch } from 'algoliasearch/lite';
 import { Hit as AlgoliaHit } from 'instantsearch.js';
 import React from 'react';
 import {
@@ -21,6 +21,10 @@ import {
   SearchBox,
   SortBy,
   ToggleRefinement,
+  Chat,
+  ChatTrigger,
+  CompareBar,
+  useInstantSearch,
 } from 'react-instantsearch';
 
 import {
@@ -30,6 +34,9 @@ import {
   Refresh,
 } from './components';
 import { Tab, Tabs } from './components/layout';
+
+import 'instantsearch.css/devtools/inject';
+import 'instantsearch.css/themes/satellite.css';
 
 import './App.css';
 
@@ -46,11 +53,44 @@ type HitProps = {
 };
 
 function Hit({ hit }: HitProps) {
+  const { indexRenderState } = useInstantSearch();
+  const { isSelected, toggleItem, canAddItems } =
+    indexRenderState.compare ?? {};
+  const selected = isSelected?.(hit.objectID) ?? false;
+
   return (
     <>
       <Highlight hit={hit} attribute="name" className="Hit-label" />
       <span className="Hit-price">${hit.price}</span>
+      <label className="Hit-compare">
+        <input
+          type="checkbox"
+          aria-label={`Compare ${hit.name}`}
+          checked={selected}
+          disabled={!toggleItem || (!selected && !canAddItems)}
+          onChange={() => toggleItem?.(hit)}
+        />
+        Compare
+      </label>
     </>
+  );
+}
+
+function ItemComponent({ item }: { item: AlgoliaHit }) {
+  return (
+    <article className="ais-Carousel-hit">
+      <div className="ais-Carousel-hit-image">
+        <img src={item.image} />
+      </div>
+      <h2 className="ais-Carousel-hit-title">
+        <a
+          href={`/products.html?pid=${item.objectID}`}
+          className="ais-Carousel-hit-link"
+        >
+          {item.name}
+        </a>
+      </h2>
+    </article>
   );
 }
 
@@ -175,6 +215,14 @@ export function App() {
           </Tabs>
         </div>
       </div>
+
+      <Chat
+        agentId="eedef238-5468-470d-bc37-f99fa741bd25"
+        feedback={true}
+        itemComponent={ItemComponent}
+      />
+      <ChatTrigger />
+      <CompareBar configurationId="algolia_comparison_7c38cb21-cf8d-4039-a9bd-730d5b751516" />
     </InstantSearch>
   );
 }

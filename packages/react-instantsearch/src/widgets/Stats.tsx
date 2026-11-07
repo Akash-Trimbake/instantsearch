@@ -34,13 +34,57 @@ export function Stats({ translations, ...props }: StatsProps) {
     areHitsSorted,
     translations: {
       rootElementText(options: StatsTranslationOptions) {
+        return `${
+          options.areHitsSorted
+            ? getSortedResultsSentence(options)
+            : getResultsSentence(options)
+        } found in ${options.processingTimeMS.toLocaleString()}ms`;
+      },
+      announcementText(options: StatsTranslationOptions) {
         return options.areHitsSorted
-          ? `${options.nbSortedHits!.toLocaleString()} relevant results sorted out of ${options.nbHits.toLocaleString()} found in ${options.processingTimeMS.toLocaleString()}ms`
-          : `${options.nbHits.toLocaleString()} results found in ${options.processingTimeMS.toLocaleString()}ms`;
+          ? getSortedResultsSentence(options)
+          : getResultsSentence(options);
       },
       ...translations,
     },
   };
 
   return <StatsUiComponent {...props} {...uiProps} />;
+}
+
+function getSortedResultsSentence({
+  nbHits,
+  nbSortedHits,
+}: StatsTranslationOptions) {
+  const suffix = `sorted out of ${nbHits.toLocaleString()}`;
+
+  if (nbSortedHits === 0) {
+    return `No relevant results ${suffix}`;
+  }
+
+  if (nbSortedHits === 1) {
+    return `1 relevant result ${suffix}`;
+  }
+
+  if (nbSortedHits! > 1) {
+    return `${(nbSortedHits || 0).toLocaleString()} relevant results ${suffix}`;
+  }
+
+  return '';
+}
+
+function getResultsSentence({ nbHits }: StatsTranslationOptions) {
+  if (nbHits === 0) {
+    return 'No results';
+  }
+
+  if (nbHits === 1) {
+    return '1 result';
+  }
+
+  if (nbHits > 1) {
+    return `${nbHits.toLocaleString()} results`;
+  }
+
+  return '';
 }

@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 /** @jsx h */
 
@@ -15,7 +15,11 @@ import originalHelper from 'algoliasearch-helper';
 import { h, render, createRef } from 'preact';
 
 import { createRenderOptions, createWidget } from '../../../test/createWidget';
-import { connectSearchBox, connectPagination } from '../../connectors';
+import {
+  connectAutocomplete,
+  connectSearchBox,
+  connectPagination,
+} from '../../connectors';
 import { createInsightsMiddleware } from '../../middlewares';
 import { index } from '../../widgets';
 import InstantSearch from '../InstantSearch';
@@ -30,8 +34,7 @@ import type {
   SearchBoxWidgetDescription,
   SearchBoxConnectorParams,
 } from '../../connectors/search-box/connectSearchBox';
-import type { UiState, Widget } from '../../types';
-import type { IndexWidget } from '../../widgets/index/index';
+import type { UiState, Widget, IndexWidget } from '../../types';
 import type { RefObject } from 'preact';
 
 type SearchBoxWidgetInstance = Widget<
@@ -71,6 +74,7 @@ jest.mock('algoliasearch-helper', () => {
 });
 
 const virtualSearchBox = connectSearchBox(() => {});
+const virtualAutocomplete = connectAutocomplete(() => {});
 
 beforeEach(() => {
   algoliasearchHelper.mockClear();
@@ -87,10 +91,10 @@ describe('Usage', () => {
       // eslint-disable-next-line no-new
       new InstantSearch({ indexName: 'indexName', searchClient: undefined });
     }).toThrowErrorMatchingInlineSnapshot(`
-"The \`searchClient\` option is required.
+      "The \`searchClient\` option is required.
 
-See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
-`);
+      See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
+    `);
   });
 
   it('throws if searchClient does not implement a search method', () => {
@@ -99,10 +103,10 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsear
       // eslint-disable-next-line no-new
       new InstantSearch({ indexName: 'indexName', searchClient: {} });
     }).toThrowErrorMatchingInlineSnapshot(`
-"The \`searchClient\` must implement a \`search\` method.
+      "The \`searchClient\` must implement a \`search\` method.
 
-See: https://www.algolia.com/doc/guides/building-search-ui/going-further/backend-search/in-depth/backend-instantsearch/js/"
-`);
+      See: https://www.algolia.com/doc/guides/building-search-ui/going-further/backend-search/in-depth/backend-instantsearch/js/"
+    `);
   });
 
   describe('root index warning', () => {
@@ -147,6 +151,20 @@ See: https://www.algolia.com/doc/guides/building-search-ui/going-further/backend
       );
     });
 
+    it('does not warn if no widget requires a search or recommend request', async () => {
+      await expect(async () => {
+        const search = new InstantSearch({
+          searchClient: createSearchClient(),
+        });
+
+        search.addWidgets([virtualAutocomplete({ requiresSearch: false })]);
+        search.start();
+        await wait(0);
+      }).not.toWarnDev(
+        '[InstantSearch.js]: No indexName provided, nor an explicit index widget in the widgets tree. This is required to be able to display results.'
+      );
+    });
+
     it('does not warn if index widget is provided', async () => {
       await expect(async () => {
         const search = new InstantSearch({
@@ -175,10 +193,10 @@ See: https://www.algolia.com/doc/guides/building-search-ui/going-further/backend
         insightsClient: 'insights',
       });
     }).toThrowErrorMatchingInlineSnapshot(`
-"The \`insightsClient\` option should be a function.
+      "The \`insightsClient\` option should be a function.
 
-See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
-`);
+      See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
+    `);
   });
 
   it('throws if addWidgets is called with a single widget', () => {
@@ -190,10 +208,10 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsear
       // @ts-expect-error
       search.addWidgets({});
     }).toThrowErrorMatchingInlineSnapshot(`
-"The \`addWidgets\` method expects an array of widgets. Please use \`addWidget\`.
+      "The \`addWidgets\` method expects an array of widgets. Please use \`addWidget\`.
 
-See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
-`);
+      See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
+    `);
   });
 
   it('throws if a widget without render or init method is added', () => {
@@ -206,10 +224,10 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsear
       });
       search.addWidgets(widgets);
     }).toThrowErrorMatchingInlineSnapshot(`
-"The widget definition expects a \`render\` and/or an \`init\` method.
+      "The widget definition expects a \`render\` and/or an \`init\` method.
 
-See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
-`);
+      See documentation: https://www.algolia.com/doc/api-reference/widgets/index-widget/js/"
+    `);
   });
 
   it('does not throw with a widget having a init method', () => {
@@ -245,10 +263,10 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsear
       // @ts-expect-error
       search.removeWidgets({});
     }).toThrowErrorMatchingInlineSnapshot(`
-"The \`removeWidgets\` method expects an array of widgets. Please use \`removeWidget\`.
+      "The \`removeWidgets\` method expects an array of widgets. Please use \`removeWidget\`.
 
-See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
-`);
+      See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
+    `);
   });
 
   it('throws if a widget without dispose method is removed', () => {
@@ -263,10 +281,25 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsear
       });
       search.removeWidgets(widgets);
     }).toThrowErrorMatchingInlineSnapshot(`
-"The widget definition expects a \`dispose\` method.
+      "The widget definition expects a \`dispose\` method.
 
-See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
-`);
+      See documentation: https://www.algolia.com/doc/api-reference/widgets/index-widget/js/"
+    `);
+  });
+
+  it('recomputes search widget flags when widgets are removed before start', () => {
+    const search = new InstantSearch({
+      indexName: 'indexName',
+      searchClient: createSearchClient(),
+    });
+    const searchBox = virtualSearchBox({});
+
+    search.addWidgets([searchBox]);
+    search.removeWidgets([searchBox]);
+    search.start();
+
+    expect(search.mainIndex.getWidgets()).toHaveLength(0);
+    expect(search._hasSearchWidget).toBe(false);
   });
 
   it('throws if createURL is called before start', () => {
@@ -276,10 +309,10 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsear
     });
 
     expect(() => search.createURL()).toThrowErrorMatchingInlineSnapshot(`
-"The \`start\` method needs to be called before \`createURL\`.
+      "The \`start\` method needs to be called before \`createURL\`.
 
-See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
-`);
+      See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
+    `);
   });
 
   it('throws if refresh is called before start', () => {
@@ -289,10 +322,10 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsear
     });
 
     expect(() => search.refresh()).toThrowErrorMatchingInlineSnapshot(`
-"The \`start\` method needs to be called before \`refresh\`.
+      "The \`start\` method needs to be called before \`refresh\`.
 
-See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
-`);
+      See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
+    `);
   });
 
   it('warns dev with EXPERIMENTAL_use', () => {
@@ -487,7 +520,7 @@ See https://www.algolia.com/doc/api-reference/widgets/configure/js/`);
                     ? { _automaticInsights: true }
                     : undefined),
                   index: request.indexName,
-                  query: request.query,
+                  query: (request as any).query || request.params.query,
                   ...(request.indexName === 'indexNameWithAutomaticInsights'
                     ? { queryID: 'queryID' }
                     : undefined),
@@ -523,6 +556,47 @@ See https://www.algolia.com/doc/api-reference/widgets/configure/js/`);
       await wait(0);
 
       expect(mapMiddlewares(search.middleware)).toEqual([]);
+    });
+
+    test('does not add automatic insights when no widget requires a search', async () => {
+      const searchClient = createSearchClientWithAutomaticInsightsOptedIn();
+      const search = new InstantSearch({
+        indexName: 'indexNameWithAutomaticInsights',
+        searchClient,
+      });
+
+      search.addWidgets([virtualAutocomplete({ requiresSearch: false })]);
+      search.start();
+
+      await wait(0);
+
+      expect(searchClient.search).not.toHaveBeenCalled();
+      expect(mapMiddlewares(search.middleware)).toEqual([]);
+    });
+
+    test('keeps automatic insights when another widget requires a search', async () => {
+      const searchClient = createSearchClientWithAutomaticInsightsOptedIn();
+      const search = new InstantSearch({
+        indexName: 'indexNameWithAutomaticInsights',
+        searchClient,
+      });
+
+      search.addWidgets([
+        virtualAutocomplete({ requiresSearch: false }),
+        virtualSearchBox({}),
+      ]);
+      search.start();
+
+      await wait(0);
+
+      expect(searchClient.search).toHaveBeenCalledTimes(1);
+      expect(mapMiddlewares(search.middleware)).toEqual([
+        {
+          $$type: 'ais.insights',
+          $$internal: true,
+          $$automatic: true,
+        },
+      ]);
     });
 
     test('insights: undefined adds the insights middleware if `_automaticInsights: true` is found in at least one index in initial response', async () => {
@@ -608,7 +682,7 @@ See https://www.algolia.com/doc/api-reference/widgets/configure/js/`);
     });
 
     test('insights: options passes options to middleware', () => {
-      const insightsClient = Object.assign(jest.fn(), { version: '2.6.0' });
+      const insightsClient = Object.assign(jest.fn(), { version: '2.17.2' });
       const search = new InstantSearch({
         searchClient: createSearchClientWithAutomaticInsightsOptedIn(),
         indexName: 'test',
@@ -949,7 +1023,34 @@ describe('start', () => {
     search.start();
 
     expect(algoliasearchHelper).toHaveBeenCalledTimes(2);
-    expect(algoliasearchHelper).toHaveBeenCalledWith(searchClient, indexName);
+    expect(algoliasearchHelper).toHaveBeenCalledWith(
+      searchClient,
+      indexName,
+      undefined,
+      { persistHierarchicalRootCount: false }
+    );
+  });
+
+  it('creates a Helper with `persistHierarchicalRootCount` set to true when specified with a future flag', () => {
+    const searchClient = createSearchClient();
+    const indexName = 'indexName';
+    const future = {
+      persistHierarchicalRootCount: true,
+    };
+    const search = new InstantSearch({
+      indexName,
+      searchClient,
+      future,
+    });
+
+    search.start();
+
+    expect(algoliasearchHelper).toHaveBeenCalledWith(
+      searchClient,
+      indexName,
+      undefined,
+      future
+    );
   });
 
   it('schedules a search with widgets', async () => {
@@ -1176,6 +1277,67 @@ describe('start', () => {
     });
   });
 
+  it('clears a search error when the final search widget is removed', async () => {
+    const { searches, searchClient } = createControlledSearchClient();
+    const search = new InstantSearch({
+      indexName: 'indexName',
+      searchClient,
+    });
+    const searchBox = virtualSearchBox({});
+    const errorEvent = new Promise<void>((resolve) => {
+      search.on('error', () => resolve());
+    });
+
+    search.addWidgets([
+      virtualAutocomplete({ requiresSearch: false }),
+      searchBox,
+    ]);
+    search.start();
+    await wait(0);
+
+    searches[0].rejecter(new Error('SERVER_ERROR'));
+    await errorEvent;
+
+    expect(search.status).toBe('error');
+    expect(search.error).toEqual(new Error('SERVER_ERROR'));
+
+    search.removeWidgets([searchBox]);
+    await wait(0);
+
+    expect(searchClient.search).toHaveBeenCalledTimes(1);
+    expect(search.status).toBe('idle');
+    expect(search.error).toBeUndefined();
+  });
+
+  it('clears a late search error after the final search widget is removed', async () => {
+    const { searches, searchClient } = createControlledSearchClient();
+    const search = new InstantSearch({
+      indexName: 'indexName',
+      searchClient,
+    });
+    const searchBox = virtualSearchBox({});
+    const errorEvent = new Promise<void>((resolve) => {
+      search.on('error', () => resolve());
+    });
+
+    search.addWidgets([
+      virtualAutocomplete({ requiresSearch: false }),
+      searchBox,
+    ]);
+    search.start();
+    await wait(0);
+
+    search.removeWidgets([searchBox]);
+    await wait(0);
+    searches[0].rejecter(new Error('SERVER_ERROR'));
+    await errorEvent;
+    await wait(0);
+
+    expect(searchClient.search).toHaveBeenCalledTimes(1);
+    expect(search.status).toBe('idle');
+    expect(search.error).toBeUndefined();
+  });
+
   it('does not trigger a search with initial results', async () => {
     const searchClient = createSearchClient();
     const search = new InstantSearch({
@@ -1215,10 +1377,10 @@ describe('start', () => {
     expect(() => {
       instance.start();
     }).toThrowErrorMatchingInlineSnapshot(`
-"The \`start\` method has already been called once.
+      "The \`start\` method has already been called once.
 
-See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
-`);
+      See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
+    `);
   });
 
   it('keeps a mainHelper already set on the instance (Vue SSR)', () => {
@@ -1263,9 +1425,7 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsear
       {
         indexName: 'indexName',
         params: {
-          facets: [],
           query: '',
-          tagFilters: '',
         },
       },
     ]);
@@ -1608,6 +1768,147 @@ describe('scheduleRender', () => {
     expect(renderSpy).toHaveBeenCalledTimes(2);
     expect(renderSpy).toHaveBeenNthCalledWith(1, { widgetRenderTimes: 0 });
     expect(renderSpy).toHaveBeenNthCalledWith(2, { widgetRenderTimes: 1 });
+  });
+
+  it('keeps the status and the error when the render is not search-driven', async () => {
+    const { searches, searchClient } = createControlledSearchClient();
+    const search = new InstantSearch({
+      indexName: 'indexName',
+      searchClient,
+    });
+    const errorEvent = new Promise<void>((resolve) => {
+      search.on('error', () => resolve());
+    });
+
+    search.addWidgets([virtualSearchBox({})]);
+    search.start();
+    await wait(0);
+
+    searches[0].rejecter(new Error('SERVER_ERROR'));
+    await errorEvent;
+    await wait(0);
+
+    expect(search.status).toBe('error');
+    expect(search.error).toEqual(new Error('SERVER_ERROR'));
+
+    search.scheduleRender(false);
+    await wait(0);
+
+    expect(search.status).toBe('error');
+    expect(search.error).toEqual(new Error('SERVER_ERROR'));
+    expect(searchClient.search).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears the stalled timer even when the render is not search-driven', async () => {
+    const { searches, searchClient } = createControlledSearchClient();
+    const search = new InstantSearch({
+      indexName: 'indexName',
+      searchClient,
+    });
+
+    search.addWidgets([virtualSearchBox({})]);
+    search.start();
+    await wait(0);
+
+    searches[0].resolver();
+    await wait(0);
+
+    search.scheduleStalledRender();
+    expect(search._searchStalledTimer).not.toBeNull();
+
+    search.scheduleRender(false);
+    await wait(0);
+
+    expect(search._searchStalledTimer).toBeNull();
+    expect(search.status).toBe('idle');
+  });
+
+  it('resets the status when a search-driven render shares the deferred window', async () => {
+    const { searches, searchClient } = createControlledSearchClient();
+    const search = new InstantSearch({
+      indexName: 'indexName',
+      searchClient,
+    });
+    const errorEvent = new Promise<void>((resolve) => {
+      search.on('error', () => resolve());
+    });
+
+    search.addWidgets([virtualSearchBox({})]);
+    search.start();
+    await wait(0);
+
+    searches[0].rejecter(new Error('SERVER_ERROR'));
+    await errorEvent;
+    await wait(0);
+
+    expect(search.status).toBe('error');
+
+    // Both renders collapse into one run, and the caller opting out of the
+    // reset must not decide for the search-driven one next to it.
+    search.scheduleRender(false);
+    search.scheduleRender();
+    await wait(0);
+
+    expect(search.status).toBe('idle');
+    expect(search.error).toBeUndefined();
+  });
+
+  it('resets the status whichever render fills the deferred window first', async () => {
+    const { searches, searchClient } = createControlledSearchClient();
+    const search = new InstantSearch({
+      indexName: 'indexName',
+      searchClient,
+    });
+    const errorEvent = new Promise<void>((resolve) => {
+      search.on('error', () => resolve());
+    });
+
+    search.addWidgets([virtualSearchBox({})]);
+    search.start();
+    await wait(0);
+
+    searches[0].rejecter(new Error('SERVER_ERROR'));
+    await errorEvent;
+    await wait(0);
+
+    expect(search.status).toBe('error');
+
+    search.scheduleRender();
+    search.scheduleRender(false);
+    await wait(0);
+
+    expect(search.status).toBe('idle');
+    expect(search.error).toBeUndefined();
+  });
+
+  it('clears a previous error once new results arrive', async () => {
+    const { searches, searchClient } = createControlledSearchClient();
+    const search = new InstantSearch({
+      indexName: 'indexName',
+      searchClient,
+    });
+    const errorEvent = new Promise<void>((resolve) => {
+      search.on('error', () => resolve());
+    });
+
+    search.addWidgets([virtualSearchBox({})]);
+    search.start();
+    await wait(0);
+
+    searches[0].rejecter(new Error('SERVER_ERROR'));
+    await errorEvent;
+    await wait(0);
+
+    expect(search.status).toBe('error');
+
+    search.mainHelper!.search();
+    expect(search.status).toBe('loading');
+
+    searches[1].resolver();
+    await wait(0);
+
+    expect(search.status).toBe('idle');
+    expect(search.error).toBeUndefined();
   });
 });
 
@@ -2193,10 +2494,10 @@ describe('setUiState', () => {
     expect(() => {
       search.setUiState({});
     }).toThrowErrorMatchingInlineSnapshot(`
-"The \`start\` method needs to be called before \`setUiState\`.
+      "The \`start\` method needs to be called before \`setUiState\`.
 
-See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
-`);
+      See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsearch/js/"
+    `);
   });
 
   test('triggers a search', async () => {
@@ -2248,6 +2549,162 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/instantsear
       uiState: {
         indexName: {},
       },
+    });
+  });
+
+  test('does not notify middlewares when applying the UI state throws', async () => {
+    const searchClient = createSearchClient();
+    const search = new InstantSearch({
+      indexName: 'indexName',
+      searchClient,
+    });
+    const onMiddlewareStateChange = jest.fn();
+    const middleware = () => {
+      return {
+        subscribe() {},
+        unsubscribe() {},
+        onStateChange: onMiddlewareStateChange,
+      };
+    };
+    const throwingWidget = {
+      $$type: 'ais.throwing',
+      init() {},
+      render() {},
+      getWidgetUiState(uiState) {
+        return uiState;
+      },
+      getWidgetSearchParameters(state, { uiState }) {
+        if (uiState.query === 'throw') {
+          throw new Error('Cannot apply the UI state');
+        }
+
+        return state;
+      },
+    } as Widget;
+
+    search.use(middleware);
+    search.addWidgets([throwingWidget]);
+    search.start();
+
+    expect(() => {
+      search.setUiState({
+        indexName: { query: 'throw' },
+      });
+    }).toThrow('Cannot apply the UI state');
+
+    await wait(0);
+
+    expect(onMiddlewareStateChange).toHaveBeenCalledTimes(0);
+  });
+
+  test('notifies middlewares of the applied part of the UI state when a child index throws', async () => {
+    const searchClient = createSearchClient();
+    const search = new InstantSearch({
+      indexName: 'indexName',
+      searchClient,
+    });
+    const onMiddlewareStateChange = jest.fn();
+    const middleware = () => {
+      return {
+        subscribe() {},
+        unsubscribe() {},
+        onStateChange: onMiddlewareStateChange,
+      };
+    };
+    const throwingWidget = {
+      $$type: 'ais.throwing',
+      init() {},
+      render() {},
+      getWidgetUiState(uiState) {
+        return uiState;
+      },
+      getWidgetSearchParameters(state, { uiState }) {
+        if (uiState.query === 'throw') {
+          throw new Error('Cannot apply the UI state');
+        }
+
+        return state;
+      },
+    } as Widget;
+
+    search.use(middleware);
+    search.addWidgets([
+      virtualSearchBox({}),
+      index({ indexName: 'childIndexName' }).addWidgets([throwingWidget]),
+    ]);
+    search.start();
+
+    expect(() => {
+      search.setUiState({
+        indexName: { query: 'applied' },
+        childIndexName: { query: 'throw' },
+      });
+    }).toThrow('Cannot apply the UI state');
+
+    await wait(0);
+
+    expect(onMiddlewareStateChange).toHaveBeenCalledTimes(1);
+    expect(onMiddlewareStateChange).toHaveBeenCalledWith({
+      uiState: expect.objectContaining({
+        indexName: { query: 'applied' },
+      }),
+    });
+  });
+
+  test('notifies middlewares of the applied part of the UI state when a child index throws with a controlled state', async () => {
+    const searchClient = createSearchClient();
+    const search = new InstantSearch({
+      indexName: 'indexName',
+      searchClient,
+      onStateChange({ uiState, setUiState }) {
+        setUiState(uiState);
+      },
+    });
+    const onMiddlewareStateChange = jest.fn();
+    const middleware = () => {
+      return {
+        subscribe() {},
+        unsubscribe() {},
+        onStateChange: onMiddlewareStateChange,
+      };
+    };
+    const throwingWidget = {
+      $$type: 'ais.throwing',
+      init() {},
+      render() {},
+      getWidgetUiState(uiState) {
+        return uiState;
+      },
+      getWidgetSearchParameters(state, { uiState }) {
+        if (uiState.query === 'throw') {
+          throw new Error('Cannot apply the UI state');
+        }
+
+        return state;
+      },
+    } as Widget;
+
+    search.use(middleware);
+    search.addWidgets([
+      virtualSearchBox({}),
+      index({ indexName: 'childIndexName' }).addWidgets([throwingWidget]),
+    ]);
+    search.start();
+
+    expect(() => {
+      search.setUiState({
+        indexName: { query: 'applied' },
+        childIndexName: { query: 'throw' },
+      });
+    }).toThrow('Cannot apply the UI state');
+
+    await wait(0);
+
+    expect(onMiddlewareStateChange).toHaveBeenCalledTimes(1);
+    expect(onMiddlewareStateChange).toHaveBeenCalledWith({
+      uiState: expect.objectContaining({
+        indexName: { query: 'applied' },
+      }),
     });
   });
 

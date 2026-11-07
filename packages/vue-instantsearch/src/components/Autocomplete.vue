@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import { connectAutocomplete } from 'instantsearch.js/es/connectors';
+import { connectAutocomplete } from 'instantsearch.js/es/connectors/index';
 
 import { createSuitMixin } from '../mixins/suit';
 import { createWidgetMixin } from '../mixins/widget';
@@ -44,11 +44,17 @@ export default {
       required: false,
       default: true,
     },
+    requiresSearch: {
+      type: Boolean,
+      required: false,
+      default: true,
+    },
   },
   computed: {
     widgetParams() {
       return {
         escapeHTML: this.escapeHTML,
+        requiresSearch: this.requiresSearch,
       };
     },
   },

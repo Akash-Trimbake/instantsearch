@@ -1,9 +1,8 @@
 import index from 'instantsearch.js/es/widgets/index/index';
 import { useMemo } from 'react';
 
-import { useIndexContext } from '../lib/useIndexContext';
-
 import { useForceUpdate } from './useForceUpdate';
+import { useIndexContext } from './useIndexContext';
 import { useInstantSearchServerContext } from './useInstantSearchServerContext';
 import { useInstantSearchSSRContext } from './useInstantSearchSSRContext';
 import { useIsomorphicLayoutEffect } from './useIsomorphicLayoutEffect';
@@ -33,6 +32,7 @@ export function useIndex(props: UseIndexProps) {
     parentIndex,
     props: stableProps,
     shouldSsr: Boolean(serverContext || initialResults),
+    skipSuspense: true,
   });
 
   return indexWidget;

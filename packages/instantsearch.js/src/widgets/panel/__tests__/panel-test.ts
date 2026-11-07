@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 
 import { castToJestMock } from '@instantsearch/testutils/castToJestMock';
@@ -133,6 +133,7 @@ describe('Templates', () => {
 
     expect(templates).toEqual({
       collapseButtonText: expect.any(Function),
+      collapseButtonLabel: expect.any(Function),
     });
   });
 

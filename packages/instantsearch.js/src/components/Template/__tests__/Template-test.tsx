@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 /** @jsx h */
 
@@ -54,6 +54,86 @@ describe('Template', () => {
     const wrapper = mount(<Template {...props} />);
 
     expect(wrapper).toMatchSnapshot();
+  });
+
+  it('can have Fragment as rootTagName with string template', () => {
+    const props = getProps({
+      rootTagName: 'fragment',
+      templates: { test: 'Hello <span>{{name}}</span> !' },
+      data: { name: 'world' },
+    });
+    const wrapper = render(<Template {...props} />);
+
+    expect(wrapper.container).toMatchSnapshot();
+
+    props.data = { name: 'world2' };
+
+    wrapper.rerender(<Template {...props} />);
+
+    expect(wrapper.container).toMatchSnapshot();
+  });
+
+  it('can have Fragment as rootTagName with Preact template', () => {
+    const props = getProps({
+      rootTagName: 'fragment',
+      templates: { test: () => <span>test</span> },
+    });
+    const wrapper = render(<Template {...props} />);
+
+    expect(wrapper.container).toMatchSnapshot();
+  });
+
+  it('can have Fragment as rootTagName with simple string', () => {
+    const props = getProps({
+      rootTagName: 'fragment',
+      templates: { test: 'test' },
+    });
+    const wrapper = render(<Template {...props} />);
+
+    expect(wrapper.container).toMatchSnapshot();
+  });
+
+  it('remounts RawHtml component when using Fragment with a string template', () => {
+    const props = getProps({
+      rootTagName: 'fragment',
+      templates: { test: 'test' },
+    });
+    const wrapper = render(
+      <div>
+        <Template {...props} />
+      </div>
+    );
+    wrapper.rerender(
+      <div>
+        <div>Hello</div>
+        {/* It won't rerender if props don't change in testing-library */}
+        <Template {...props} data={{ a: 'a' }} />
+      </div>
+    );
+
+    expect(wrapper.container).toMatchSnapshot();
+  });
+
+  it('correctly unmounts empty', () => {
+    const props = getProps({
+      rootTagName: 'fragment',
+      templates: { test: '' },
+    });
+    const wrapper = render(
+      <div>
+        <Template {...props} />
+      </div>
+    );
+
+    expect(wrapper.container).toMatchInlineSnapshot(`
+      <div>
+        <div />
+      </div>
+    `);
+
+    wrapper.unmount();
+
+    expect(wrapper.container).toMatchInlineSnapshot(`<div />`);
   });
 
   it('forward rootProps to the first node', () => {

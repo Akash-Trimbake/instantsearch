@@ -1,4 +1,6 @@
 import {
+  addAbsolutePosition,
+  addQueryID,
   escapeHits,
   TAG_PLACEHOLDER,
   checkRendering,
@@ -9,13 +11,27 @@ import {
 } from '../../lib/utils';
 
 import type { SendEventForHits } from '../../lib/utils';
-import type { Hit, Connector, WidgetRenderState } from '../../types';
+import type {
+  Hit,
+  Connector,
+  IndexRenderState,
+  InitOptions,
+  RenderOptions,
+  WidgetRenderState,
+} from '../../types';
 import type { SearchResults } from 'algoliasearch-helper';
 
 const withUsage = createDocumentationMessageGenerator({
   name: 'autocomplete',
   connector: true,
 });
+
+export type TransformItemsIndicesConfig = {
+  indexName: string;
+  indexId: string;
+  hits: Hit[];
+  results: SearchResults;
+};
 
 export type AutocompleteConnectorParams = {
   /**
@@ -24,13 +40,41 @@ export type AutocompleteConnectorParams = {
    * @default `true`
    */
   escapeHTML?: boolean;
+  /**
+   * Transforms the items of all indices.
+   */
+  transformItems?: (
+    indices: TransformItemsIndicesConfig[]
+  ) => TransformItemsIndicesConfig[];
+  /**
+   * Whether this widget should make InstantSearch require a main search request.
+   * If this is the only widget, and you mark `requiresSearch: false`, no search request will happen.
+   *
+   * @default true
+   */
+  requiresSearch?: boolean;
+  /**
+   * Enable usage of future Autocomplete behavior.
+   */
+  future?: {
+    /**
+     * When set to true, `currentRefinement` is `undefined` when no query has
+     * been set (instead of an empty string). This lets consumers distinguish
+     * between "initial/submitted state" and "user explicitly cleared the input".
+     *
+     * @default `false`
+     */
+    undefinedEmptyQuery?: boolean;
+  };
 };
 
 export type AutocompleteRenderState = {
   /**
    * The current value of the query.
+   * When `future.undefinedEmptyQuery` is `true`, this is `undefined` when no
+   * query has been set yet (e.g. on init or after submit).
    */
-  currentRefinement: string;
+  currentRefinement: string | undefined;
 
   /**
    * The indices this widget has access to.
@@ -40,6 +84,11 @@ export type AutocompleteRenderState = {
      * The name of the index
      */
     indexName: string;
+
+    /**
+     * The id of the index
+     */
+    indexId: string;
 
     /**
      * The resolved hits from the index matching the query.
@@ -90,6 +139,11 @@ const connectAutocomplete: AutocompleteConnector = function connectAutocomplete(
     const {
       // @MAJOR: this can default to false
       escapeHTML = true,
+      transformItems = ((indices) => indices) as NonNullable<
+        AutocompleteConnectorParams['transformItems']
+      >,
+      requiresSearch = true,
+      future: { undefinedEmptyQuery = false } = {},
     } = widgetParams || {};
 
     warning(
@@ -125,6 +179,8 @@ search.addWidgets([
 
     return {
       $$type: 'ais.autocomplete',
+      dependsOn: requiresSearch ? ('search' as const) : ('none' as const),
+      shouldRender: requiresSearch ? undefined : () => true,
 
       init(initOptions) {
         const { instantSearchInstance } = initOptions;
@@ -156,7 +212,10 @@ search.addWidgets([
         );
       },
 
-      getRenderState(renderState, renderOptions) {
+      getRenderState(
+        renderState: IndexRenderState,
+        renderOptions: InitOptions | RenderOptions
+      ): IndexRenderState & AutocompleteWidgetDescription['indexRenderState'] {
         return {
           ...renderState,
           autocomplete: this.getWidgetRenderState(renderOptions),
@@ -168,47 +227,67 @@ search.addWidgets([
         state,
         scopedResults,
         instantSearchInstance,
-      }) {
+      }: InitOptions | RenderOptions) {
         if (!connectorState.refine) {
           connectorState.refine = (query: string) => {
             helper.setQuery(query).search();
           };
         }
 
+        const sendEventMap: Record<string, SendEventForHits> = {};
         const indices = scopedResults.map((scopedResult) => {
           // We need to escape the hits because highlighting
           // exposes HTML tags to the end-user.
-          scopedResult.results.hits = escapeHTML
-            ? escapeHits(scopedResult.results.hits)
-            : scopedResult.results.hits;
+          if (scopedResult.results) {
+            scopedResult.results.hits = escapeHTML
+              ? escapeHits(scopedResult.results.hits)
+              : scopedResult.results.hits;
+          }
 
-          const sendEvent = createSendEventForHits({
+          sendEventMap[scopedResult.indexId] = createSendEventForHits({
             instantSearchInstance,
-            index: scopedResult.results.index,
+            helper: scopedResult.helper,
             widgetType: this.$$type,
           });
 
+          const hits = scopedResult.results
+            ? addQueryID(
+                addAbsolutePosition(
+                  scopedResult.results.hits,
+                  scopedResult.results.page,
+                  scopedResult.results.hitsPerPage
+                ),
+                scopedResult.results.queryID
+              )
+            : [];
+
           return {
             indexId: scopedResult.indexId,
-            indexName: scopedResult.results.index,
-            hits: scopedResult.results.hits,
-            results: scopedResult.results,
-            sendEvent,
+            indexName: scopedResult.results?.index || '',
+            hits,
+            results: scopedResult.results || ({} as unknown as SearchResults),
           };
         });
 
         return {
-          currentRefinement: state.query || '',
-          indices,
+          currentRefinement: undefinedEmptyQuery
+            ? state.query
+            : state.query || '',
+          indices: transformItems(indices).map((transformedIndex) => ({
+            ...transformedIndex,
+            sendEvent: sendEventMap[transformedIndex.indexId],
+          })),
           refine: connectorState.refine,
           widgetParams,
         };
       },
 
       getWidgetUiState(uiState, { searchParameters }) {
-        const query = searchParameters.query || '';
+        const query = undefinedEmptyQuery
+          ? searchParameters.query
+          : searchParameters.query || '';
 
-        if (query === '' || (uiState && uiState.query === query)) {
+        if (!query || query === '' || (uiState && uiState.query === query)) {
           return uiState;
         }
 
@@ -220,7 +299,7 @@ search.addWidgets([
 
       getWidgetSearchParameters(searchParameters, { uiState }) {
         const parameters = {
-          query: uiState.query || '',
+          query: undefinedEmptyQuery ? uiState.query : uiState.query || '',
         };
 
         if (!escapeHTML) {

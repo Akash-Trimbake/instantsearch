@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 
 import { createSearchClient } from '@instantsearch/mocks';
@@ -138,5 +138,75 @@ describe('router', () => {
 
     expect(router.onUpdate).toHaveBeenCalledTimes(1);
     expect(setUiStateSpy).not.toHaveBeenCalled();
+  });
+
+  it('warns if initialUiState and routing are used together', () => {
+    const state = {
+      'my-index': {
+        query: 'iPhone',
+      },
+    };
+
+    const searchClient = createSearchClient();
+    const router: Router = {
+      onUpdate: jest.fn((callback) => {
+        callback(state);
+      }),
+      read: () => state,
+      write: () => {},
+      createURL: () => '',
+      dispose: () => {},
+    };
+
+    const search = instantsearch({
+      indexName: 'my-index',
+      searchClient,
+      initialUiState: {
+        'my-index': {
+          query: 'MacBook',
+        },
+      },
+      routing: {
+        router,
+      },
+    });
+
+    expect(() => {
+      search.start();
+    }).toWarnDev(
+      '[InstantSearch.js]: Using `initialUiState` together with routing is not recommended. The `initialUiState` will be overwritten by the URL parameters.'
+    );
+  });
+
+  it("does not warn if initialUiState isn't used", () => {
+    const state = {
+      'my-index': {
+        query: 'iPhone',
+      },
+    };
+
+    const searchClient = createSearchClient();
+    const router: Router = {
+      onUpdate: jest.fn((callback) => {
+        callback(state);
+      }),
+      read: () => state,
+      write: () => {},
+      createURL: () => '',
+      dispose: () => {},
+    };
+
+    const search = instantsearch({
+      indexName: 'my-index',
+      searchClient,
+      initialUiState: {},
+      routing: {
+        router,
+      },
+    });
+
+    expect(() => {
+      search.start();
+    }).not.toWarnDev();
   });
 });

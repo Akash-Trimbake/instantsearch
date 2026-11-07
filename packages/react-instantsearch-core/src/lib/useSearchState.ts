@@ -15,7 +15,7 @@ export type SearchStateApi<TUiState extends UiState> = {
 };
 
 export function useSearchState<
-  TUiState extends UiState
+  TUiState extends UiState,
 >(): SearchStateApi<TUiState> {
   const search = useInstantSearchContext<TUiState>();
   const searchIndex = useIndexContext<TUiState>();
@@ -47,6 +47,11 @@ export function useSearchState<
     }
 
     search.addListener('render', handleRender);
+
+    // Force setting state to mitigate potential race conditions where
+    // render listener is added after search results have been returned.
+    // This edge case is currently not covered by the tests.
+    handleRender();
 
     return () => {
       search.removeListener('render', handleRender);

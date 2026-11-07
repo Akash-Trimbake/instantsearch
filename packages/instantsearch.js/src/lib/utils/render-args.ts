@@ -1,5 +1,10 @@
-import type { InstantSearch, UiState } from '../../types';
-import type { IndexWidget } from '../../widgets/index/index';
+import type {
+  InstantSearch,
+  UiState,
+  Widget,
+  IndexWidget,
+  IndexRenderState,
+} from '../../types';
 
 export function createInitArgs(
   instantSearchInstance: InstantSearch,
@@ -13,7 +18,11 @@ export function createInitArgs(
     parent,
     instantSearchInstance,
     state: helper.state,
-    renderState: instantSearchInstance.renderState,
+    // Keep renderState live so render options retained by connector closures
+    // don't retain previous renderState snapshots. See #6669.
+    get renderState() {
+      return instantSearchInstance.renderState;
+    },
     templatesConfig: instantSearchInstance.templatesConfig,
     createURL: parent.createURL,
     scopedResults: [],
@@ -27,9 +36,10 @@ export function createInitArgs(
 
 export function createRenderArgs(
   instantSearchInstance: InstantSearch,
-  parent: IndexWidget
+  parent: IndexWidget,
+  widget: IndexWidget | Widget
 ) {
-  const results = parent.getResults()!;
+  const results = parent.getResultsForWidget(widget);
   const helper = parent.getHelper()!;
 
   return {
@@ -38,8 +48,11 @@ export function createRenderArgs(
     instantSearchInstance,
     results,
     scopedResults: parent.getScopedResults(),
-    state: results ? results._state : helper.state,
-    renderState: instantSearchInstance.renderState,
+    state: results && '_state' in results ? results._state : helper.state,
+    // Keep renderState live to avoid retaining previous renderState snapshots.
+    get renderState() {
+      return instantSearchInstance.renderState;
+    },
     templatesConfig: instantSearchInstance.templatesConfig,
     createURL: parent.createURL,
     searchMetadata: {
@@ -47,5 +60,27 @@ export function createRenderArgs(
     },
     status: instantSearchInstance.status,
     error: instantSearchInstance.error,
+  };
+}
+
+export function storeRenderState({
+  renderState,
+  instantSearchInstance,
+  parent,
+}: {
+  renderState: IndexRenderState;
+  instantSearchInstance: InstantSearch;
+  parent?: IndexWidget;
+}) {
+  const parentIndexName = parent
+    ? parent.getIndexId()
+    : instantSearchInstance.mainIndex.getIndexId();
+
+  instantSearchInstance.renderState = {
+    ...instantSearchInstance.renderState,
+    [parentIndexName]: {
+      ...instantSearchInstance.renderState[parentIndexName],
+      ...renderState,
+    },
   };
 }

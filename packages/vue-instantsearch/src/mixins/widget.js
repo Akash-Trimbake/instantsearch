@@ -3,7 +3,7 @@ import { isVue3 } from '../util/vue-compat';
 import { warn } from '../util/warn';
 
 export const createWidgetMixin = (
-  { connector } = {},
+  { connector, isEqualWidgetParams, snapshotWidgetParams } = {},
   additionalProperties = {}
 ) => ({
   inject: {
@@ -35,6 +35,9 @@ export const createWidgetMixin = (
         this.factory(this.widgetParams),
         additionalProperties
       );
+      this.appliedWidgetParams = snapshotWidgetParams
+        ? snapshotWidgetParams(this.widgetParams)
+        : undefined;
       this.getParentIndex().addWidgets([this.widget]);
 
       if (
@@ -71,22 +74,33 @@ Read more on using connectors: https://alg.li/vue-custom`
   watch: {
     widgetParams: {
       handler(nextWidgetParams) {
+        // Deep watchers fire on new but equal references; opt-in widgets skip those.
+        if (
+          isEqualWidgetParams &&
+          isEqualWidgetParams(this.appliedWidgetParams, nextWidgetParams)
+        ) {
+          return;
+        }
+        this.appliedWidgetParams = snapshotWidgetParams
+          ? snapshotWidgetParams(nextWidgetParams)
+          : undefined;
+
         this.state = null;
-        this.getParentIndex().removeWidgets([this.widget]);
+        const previousWidget = this.widget;
         this.widget = _objectSpread(
           this.factory(nextWidgetParams),
           additionalProperties
         );
-        this.getParentIndex().addWidgets([this.widget]);
+        this.getParentIndex().updateWidget(previousWidget, this.widget);
       },
       deep: true,
     },
   },
   methods: {
     updateState(state = {}, isFirstRender) {
-      if (!isFirstRender) {
-        // Avoid updating the state on first render
-        // otherwise there will be a flash of placeholder data
+      // Search-backed widgets skip placeholder state from init. Request-free
+      // widgets may not receive another render, so their init state is final.
+      if (!isFirstRender || this.widget.dependsOn === 'none') {
         this.state = state;
       }
     },

@@ -39,7 +39,7 @@ var lib = {
 
     mod[attribute] = facetRefinement;
 
-    return defaultsPure({}, mod, refinementList);
+    return defaultsPure(mod, refinementList);
   },
   /**
    * Removes refinement(s) for an attribute:
@@ -134,8 +134,7 @@ var lib = {
         memo[key] = facetList;
 
         return memo;
-      },
-      {});
+      }, {});
 
       if (hasChanged) return newRefinementList;
       return refinementList;

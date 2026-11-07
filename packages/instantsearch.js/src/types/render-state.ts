@@ -1,13 +1,16 @@
 import type { AnswersWidgetDescription } from '../connectors/answers/connectAnswers';
 import type { AutocompleteWidgetDescription } from '../connectors/autocomplete/connectAutocomplete';
 import type { BreadcrumbWidgetDescription } from '../connectors/breadcrumb/connectBreadcrumb';
+import type { ChatWidgetDescription } from '../connectors/chat/connectChat';
 import type { ClearRefinementsWidgetDescription } from '../connectors/clear-refinements/connectClearRefinements';
+import type { CompareWidgetDescription } from '../connectors/compare/connectCompare';
 import type { ConfigureWidgetDescription } from '../connectors/configure/connectConfigure';
 import type { CurrentRefinementsWidgetDescription } from '../connectors/current-refinements/connectCurrentRefinements';
+import type { FeedsWidgetDescription } from '../connectors/feeds/connectFeeds';
 import type { GeoSearchWidgetDescription } from '../connectors/geo-search/connectGeoSearch';
 import type { HierarchicalMenuWidgetDescription } from '../connectors/hierarchical-menu/connectHierarchicalMenu';
-import type { HitsPerPageWidgetDescription } from '../connectors/hits-per-page/connectHitsPerPage';
 import type { HitsWidgetDescription } from '../connectors/hits/connectHits';
+import type { HitsPerPageWidgetDescription } from '../connectors/hits-per-page/connectHitsPerPage';
 import type { InfiniteHitsWidgetDescription } from '../connectors/infinite-hits/connectInfiniteHits';
 import type { MenuWidgetDescription } from '../connectors/menu/connectMenu';
 import type { NumericMenuWidgetDescription } from '../connectors/numeric-menu/connectNumericMenu';
@@ -29,9 +32,12 @@ import type { PlacesWidgetDescription } from '../widgets/places/places';
 type ConnectorRenderStates = AnswersWidgetDescription['indexRenderState'] &
   AutocompleteWidgetDescription['indexRenderState'] &
   BreadcrumbWidgetDescription['indexRenderState'] &
+  ChatWidgetDescription['indexRenderState'] &
   ClearRefinementsWidgetDescription['indexRenderState'] &
+  CompareWidgetDescription['indexRenderState'] &
   ConfigureWidgetDescription['indexRenderState'] &
   CurrentRefinementsWidgetDescription['indexRenderState'] &
+  FeedsWidgetDescription['indexRenderState'] &
   GeoSearchWidgetDescription['indexRenderState'] &
   HierarchicalMenuWidgetDescription['indexRenderState'] &
   HitsWidgetDescription['indexRenderState'] &

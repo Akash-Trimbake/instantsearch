@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 /** @jsx h */
 
@@ -660,7 +660,7 @@ describe('RefinementList', () => {
               <label>
                 <input type="radio" checked="${item.isRefined}" />
                 ${item.value}
-              </span>
+              </label>
             `,
         showMoreText: '',
       };

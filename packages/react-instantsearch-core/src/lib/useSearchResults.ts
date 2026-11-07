@@ -1,3 +1,4 @@
+import { isIndexWidget } from 'instantsearch.js/es/lib/utils';
 import { useEffect, useState } from 'react';
 
 import { getIndexSearchResults } from './getIndexSearchResults';
@@ -15,9 +16,14 @@ export type SearchResultsApi = {
 export function useSearchResults(): SearchResultsApi {
   const search = useInstantSearchContext();
   const searchIndex = useIndexContext();
-  const [searchResults, setSearchResults] = useState(() =>
-    getIndexSearchResults(searchIndex)
-  );
+  const [searchResults, setSearchResults] = useState<SearchResultsApi>(() => {
+    const indexSearchResults = getIndexSearchResults(searchIndex);
+    // We do this not to leak `recommendResults` in the API.
+    return {
+      results: indexSearchResults.results,
+      scopedResults: indexSearchResults.scopedResults,
+    };
+  });
 
   useEffect(() => {
     function handleRender() {
@@ -31,10 +37,24 @@ export function useSearchResults(): SearchResultsApi {
           results,
           scopedResults: searchIndex.getScopedResults(),
         });
+      } else if (search.mainIndex.getIndexName().length === 0) {
+        // If the main index has no name, we get the scoped results from
+        // the first child index instead.
+        const childIndex = search.mainIndex.getWidgets().find(isIndexWidget);
+        childIndex &&
+          setSearchResults({
+            results: getIndexSearchResults(searchIndex).results,
+            scopedResults: childIndex.getScopedResults(),
+          });
       }
     }
 
     search.addListener('render', handleRender);
+
+    // Force setting results to mitigate potential race conditions where
+    // render listener is added after search results have been returned.
+    // This edge case is currently not covered by the tests.
+    handleRender();
 
     return () => {
       search.removeListener('render', handleRender);

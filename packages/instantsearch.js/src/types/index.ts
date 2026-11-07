@@ -5,6 +5,7 @@ export * from './utils';
 // eslint-disable-next-line import/export
 export * from './algoliasearch';
 export * from './results';
+export * from './recommend';
 
 // component-related
 export * from './component';
@@ -22,6 +23,3 @@ export * from './widget';
 export * from './ui-state';
 export * from './render-state';
 export * from './templates';
-
-// from specific widgets
-export type { IndexWidget } from '../widgets/index/index';

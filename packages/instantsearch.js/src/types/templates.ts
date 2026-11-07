@@ -14,7 +14,10 @@ import type { VNode } from 'preact';
 
 export type Template<TTemplateData = void> =
   | string
-  | ((data: TTemplateData, params: TemplateParams) => VNode | VNode[] | string);
+  | ((
+      data: TTemplateData,
+      params: TemplateParams
+    ) => VNode | VNode[] | string | null);
 
 export type TemplateParams = {
   html: typeof html;
@@ -47,7 +50,11 @@ export type TemplateWithBindEvent<TTemplateData = void> =
     ) => VNode | VNode[] | string);
 
 export type Templates = {
-  [key: string]: Template<any> | TemplateWithBindEvent<any> | undefined;
+  [key: string]:
+    | Template<any>
+    | TemplateWithBindEvent<any>
+    | Templates
+    | undefined;
 };
 
 export type HoganHelpers<TKeys extends string = string> = Record<

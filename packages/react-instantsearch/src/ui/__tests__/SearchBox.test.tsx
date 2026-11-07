@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 
 import { render, within } from '@testing-library/react';
@@ -29,6 +29,7 @@ describe('SearchBox', () => {
       translations: {
         submitButtonTitle: 'Submit the search query.',
         resetButtonTitle: 'Clear the search query.',
+        aiModeButtonTitle: 'AI Mode',
       },
       ...props,
     };
@@ -63,6 +64,7 @@ describe('SearchBox', () => {
               value=""
             />
             <button
+              aria-label="Submit the search query."
               class="ais-SearchBox-submit"
               title="Submit the search query."
               type="submit"
@@ -80,6 +82,7 @@ describe('SearchBox', () => {
               </svg>
             </button>
             <button
+              aria-label="Clear the search query."
               class="ais-SearchBox-reset"
               hidden=""
               title="Clear the search query."
@@ -153,6 +156,7 @@ describe('SearchBox', () => {
       translations: {
         submitButtonTitle: 'Submit search',
         resetButtonTitle: 'Reset query',
+        aiModeButtonTitle: 'AI Mode',
       },
     });
     const { container } = render(<SearchBox {...props} />);
@@ -181,6 +185,7 @@ describe('SearchBox', () => {
               value=""
             />
             <button
+              aria-label="Submit search"
               class="ais-SearchBox-submit"
               title="Submit search"
               type="submit"
@@ -198,6 +203,7 @@ describe('SearchBox', () => {
               </svg>
             </button>
             <button
+              aria-label="Reset query"
               class="ais-SearchBox-reset"
               hidden=""
               title="Reset query"
@@ -297,6 +303,7 @@ describe('SearchBox', () => {
               value=""
             />
             <button
+              aria-label="Submit the search query."
               class="ais-SearchBox-submit"
               title="Submit the search query."
               type="submit"
@@ -304,6 +311,7 @@ describe('SearchBox', () => {
               submit
             </button>
             <button
+              aria-label="Clear the search query."
               class="ais-SearchBox-reset"
               hidden=""
               title="Clear the search query."
@@ -493,6 +501,47 @@ describe('SearchBox', () => {
     });
   });
 
+  describe('AI mode button', () => {
+    test('renders the AI mode button when onAiModeClick is provided', () => {
+      const onAiModeClick = jest.fn();
+      const props = createProps({ onAiModeClick });
+
+      const { container } = render(<SearchBox {...props} />);
+      const aiButton =
+        container.querySelector<HTMLButtonElement>('.ais-AiModeButton')!;
+
+      expect(aiButton).not.toBeNull();
+      expect(aiButton.disabled).toBe(false);
+
+      userEvent.click(aiButton);
+      expect(onAiModeClick).toHaveBeenCalledTimes(1);
+    });
+
+    test('does not render the AI mode button without onAiModeClick', () => {
+      const props = createProps({});
+
+      const { container } = render(<SearchBox {...props} />);
+      expect(container.querySelector('.ais-AiModeButton')).toBeNull();
+    });
+
+    test('disables the button when aiModeButtonDisabled is true', () => {
+      const onAiModeClick = jest.fn();
+      const props = createProps({
+        onAiModeClick,
+        aiModeButtonDisabled: true,
+      });
+
+      const { container } = render(<SearchBox {...props} />);
+      const aiButton =
+        container.querySelector<HTMLButtonElement>('.ais-AiModeButton')!;
+
+      expect(aiButton.disabled).toBe(true);
+
+      userEvent.click(aiButton);
+      expect(onAiModeClick).not.toHaveBeenCalled();
+    });
+  });
+
   test('accepts custom class names', () => {
     const props = createProps({
       className: 'MyCustomSearchBox',
@@ -534,6 +583,7 @@ describe('SearchBox', () => {
               value=""
             />
             <button
+              aria-label="Submit the search query."
               class="ais-SearchBox-submit SUBMIT"
               title="Submit the search query."
               type="submit"
@@ -551,6 +601,7 @@ describe('SearchBox', () => {
               </svg>
             </button>
             <button
+              aria-label="Clear the search query."
               class="ais-SearchBox-reset RESET"
               hidden=""
               title="Clear the search query."

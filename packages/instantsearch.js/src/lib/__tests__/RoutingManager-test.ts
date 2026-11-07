@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom-global
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 
 import { createSearchClient } from '@instantsearch/mocks';
@@ -154,7 +154,7 @@ describe('RoutingManager', () => {
       const widget = createWidget({
         render: jest.fn(),
         getWidgetSearchParameters: jest.fn((searchParameters, { uiState }) =>
-          searchParameters.setQuery(uiState.query)
+          searchParameters.setQuery(uiState.query!)
         ),
       });
 
@@ -417,11 +417,21 @@ describe('RoutingManager', () => {
       await wait(0);
 
       expect(router.write).toHaveBeenCalledTimes(3);
-      expect(router.write).toHaveBeenLastCalledWith({
-        indexName: {
-          query: 'Apple',
+      expect(router.write).toHaveBeenLastCalledWith(
+        {
+          indexName: {
+            query: 'Apple',
+          },
         },
-      });
+        // The write applies the route the router read on update.
+        {
+          source: {
+            indexName: {
+              query: 'Apple',
+            },
+          },
+        }
+      );
     });
 
     test('skips duplicate route state entries', async () => {

@@ -10,11 +10,20 @@ import type {
   SearchBoxCSSClasses,
   SearchBoxTemplates,
 } from '../../widgets/search-box/search-box';
+import type { ComponentProps } from 'preact';
 
-export type SearchBoxComponentCSSClasses =
-  ComponentCSSClasses<SearchBoxCSSClasses>;
+export type SearchBoxComponentCSSClasses = ComponentCSSClasses<
+  Omit<SearchBoxCSSClasses, 'aiModeButton' | 'aiModeIcon' | 'aiModeLabel'>
+> & {
+  aiModeButton?: string;
+  aiModeIcon?: string;
+  aiModeLabel?: string;
+};
 
-export type SearchBoxComponentTemplates = Required<SearchBoxTemplates>;
+export type SearchBoxComponentTemplates = Required<
+  Omit<SearchBoxTemplates, 'aiMode'>
+> &
+  Pick<SearchBoxTemplates, 'aiMode'>;
 
 type SearchBoxProps = {
   placeholder?: string;
@@ -27,12 +36,18 @@ type SearchBoxProps = {
   refine?: (value: string) => void;
   autofocus?: boolean;
   searchAsYouType?: boolean;
+  ignoreCompositionEvents?: boolean;
   isSearchStalled?: boolean;
   disabled?: boolean;
   ariaLabel?: string;
+  submitTitle?: string;
+  resetTitle?: string;
   onChange?: (event: Event) => void;
   onSubmit?: (event: Event) => void;
   onReset?: (event: Event) => void;
+  inputProps?: Partial<ComponentProps<'input'>>;
+  onAiModeClick?: (query: string) => void;
+  aiModeButtonDisabled?: boolean;
 };
 
 const defaultProps = {
@@ -42,13 +57,17 @@ const defaultProps = {
   showLoadingIndicator: true,
   autofocus: false,
   searchAsYouType: true,
+  ignoreCompositionEvents: false,
   isSearchStalled: false,
   disabled: false,
   ariaLabel: 'Search',
+  submitTitle: 'Submit the search query',
+  resetTitle: 'Clear the search query',
   onChange: noop,
   onSubmit: noop,
   onReset: noop,
   refine: noop,
+  inputProps: {},
 };
 
 type SearchBoxPropsWithDefaultProps = SearchBoxProps &
@@ -84,15 +103,25 @@ class SearchBox extends Component<
   }
 
   private onInput = (event: Event) => {
+    // @ts-expect-error the context incompatibility of `this` doesn't matter
+    this.props.inputProps.onInput?.(event);
+
     const { searchAsYouType, refine, onChange } = this.props;
     const query = (event.target as HTMLInputElement).value;
 
-    if (searchAsYouType) {
-      refine(query);
-    }
-    this.setState({ query });
+    if (
+      !(
+        this.props.ignoreCompositionEvents &&
+        (event as KeyboardEvent).isComposing
+      )
+    ) {
+      if (searchAsYouType) {
+        refine(query);
+      }
+      this.setState({ query });
 
-    onChange(event);
+      onChange(event);
+    }
   };
 
   public componentWillReceiveProps(nextProps: SearchBoxPropsWithDefaultProps) {
@@ -138,12 +167,23 @@ class SearchBox extends Component<
     onReset(event);
   };
 
-  private onBlur = () => {
+  private onBlur = (event: FocusEvent) => {
+    // @ts-expect-error the context incompatibility of `this` doesn't matter
+    this.props.inputProps.onBlur?.(event);
+
     this.setState({ focused: false });
   };
 
-  private onFocus = () => {
+  private onFocus: (event: FocusEvent) => void = (event) => {
+    // @ts-expect-error the context incompatibility of `this` doesn't matter
+    this.props.inputProps.onFocus?.(event);
+
     this.setState({ focused: true });
+  };
+
+  private onAiModeClick = (event: Event) => {
+    event.preventDefault();
+    this.props.onAiModeClick?.(this.state.query);
   };
 
   public render() {
@@ -157,6 +197,9 @@ class SearchBox extends Component<
       templates,
       isSearchStalled,
       ariaLabel,
+      inputProps,
+      onAiModeClick,
+      aiModeButtonDisabled,
     } = this.props;
 
     return (
@@ -170,6 +213,7 @@ class SearchBox extends Component<
           onReset={this.onReset}
         >
           <input
+            {...inputProps}
             ref={this.input}
             value={this.state.query}
             disabled={this.props.disabled}
@@ -184,6 +228,9 @@ class SearchBox extends Component<
             spellCheck="false"
             maxLength={512}
             onInput={this.onInput}
+            // see: https://github.com/preactjs/preact/issues/1978
+            // eslint-disable-next-line react/no-unknown-property
+            oncompositionend={this.onInput}
             onBlur={this.onBlur}
             onFocus={this.onFocus}
             aria-label={ariaLabel}
@@ -195,7 +242,8 @@ class SearchBox extends Component<
             rootProps={{
               className: cssClasses.submit,
               type: 'submit',
-              title: 'Submit the search query',
+              title: this.props.submitTitle,
+              'aria-label': this.props.submitTitle,
               hidden: !showSubmit,
             }}
             templates={templates}
@@ -208,7 +256,8 @@ class SearchBox extends Component<
             rootProps={{
               className: cssClasses.reset,
               type: 'reset',
-              title: 'Clear the search query',
+              title: this.props.resetTitle,
+              'aria-label': this.props.resetTitle,
               hidden: !(
                 showReset &&
                 this.state.query.trim() &&
@@ -226,6 +275,22 @@ class SearchBox extends Component<
               rootProps={{
                 className: cssClasses.loadingIndicator,
                 hidden: !isSearchStalled,
+              }}
+              templates={templates}
+              data={{ cssClasses }}
+            />
+          )}
+
+          {onAiModeClick && (
+            <Template
+              templateKey="aiMode"
+              rootTagName="button"
+              rootProps={{
+                className: cssClasses.aiModeButton,
+                type: 'button',
+                title: 'AI Mode',
+                disabled: aiModeButtonDisabled,
+                onClick: this.onAiModeClick,
               }}
               templates={templates}
               data={{ cssClasses }}

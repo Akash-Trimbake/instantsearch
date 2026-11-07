@@ -1,5 +1,6 @@
 import { fakeAct } from '../../common';
 
+import { createLinksTests } from './links';
 import { createOptionsTests } from './options';
 
 import type { TestOptions, TestSetup } from '../../common';
@@ -12,13 +13,14 @@ export type SearchBoxWidgetSetup = TestSetup<{
 
 export function createSearchBoxWidgetTests(
   setup: SearchBoxWidgetSetup,
-  { act = fakeAct, skippedTests = {} }: TestOptions = {}
+  { act = fakeAct, skippedTests = {}, flavor = 'javascript' }: TestOptions = {}
 ) {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
 
   describe('SearchBox widget common tests', () => {
-    createOptionsTests(setup, { act, skippedTests });
+    createOptionsTests(setup, { act, skippedTests, flavor });
+    createLinksTests(setup, { act, skippedTests, flavor });
   });
 }

@@ -1,4 +1,4 @@
-import algoliasearch from 'algoliasearch/lite';
+import { liteClient as algoliasearch } from 'algoliasearch/lite';
 import { Hit } from 'instantsearch.js';
 import React from 'react';
 import {
@@ -9,9 +9,16 @@ import {
   Pagination,
   RefinementList,
   SearchBox,
+  TrendingItems,
+  Carousel,
+  Chat,
+  ChatTrigger,
+  CurrentRefinements,
 } from 'react-instantsearch';
 
 import { Panel } from './Panel';
+
+import 'instantsearch.css/themes/satellite.css';
 
 import './App.css';
 
@@ -47,36 +54,84 @@ export function App() {
               <Panel header="brand">
                 <RefinementList attribute="brand" />
               </Panel>
+              <Panel header="categories">
+                <RefinementList attribute="categories" />
+              </Panel>
             </div>
 
             <div className="search-panel__results">
-              <SearchBox placeholder="" className="searchbox" />
+              <SearchBox placeholder="" className="searchbox" aiMode />
+              <Panel
+                header="Current Refinements"
+                hidden={(state) =>
+                  state.currentRefinements?.items?.length === 0
+                }
+              >
+                <CurrentRefinements />
+              </Panel>
               <Hits hitComponent={HitComponent} />
 
               <div className="pagination">
                 <Pagination />
               </div>
+              <div>
+                <TrendingItems
+                  itemComponent={ItemComponent}
+                  limit={6}
+                  layoutComponent={Carousel}
+                />
+              </div>
             </div>
           </div>
+
+          <Chat
+            agentId="eedef238-5468-470d-bc37-f99fa741bd25"
+            feedback={true}
+            itemComponent={ItemComponent}
+          />
+          <ChatTrigger />
         </InstantSearch>
       </div>
     </div>
   );
 }
 
-type HitProps = {
-  hit: Hit;
-};
+type HitType = Hit<{
+  image: string;
+  name: string;
+  description: string;
+}>;
 
-function HitComponent({ hit }: HitProps) {
+function HitComponent({ hit }: { hit: HitType }) {
   return (
     <article>
       <h1>
-        <Highlight attribute="name" hit={hit} />
+        <a href={`/products.html?pid=${hit.objectID}`}>
+          <Highlight attribute="name" hit={hit} />
+        </a>
       </h1>
       <p>
         <Highlight attribute="description" hit={hit} />
       </p>
+      <a href={`/products.html?pid=${hit.objectID}`}>See product</a>
+    </article>
+  );
+}
+
+function ItemComponent({ item }: { item: Hit }) {
+  return (
+    <article className="ais-Carousel-hit">
+      <div className="ais-Carousel-hit-image">
+        <img src={item.image} />
+      </div>
+      <h2 className="ais-Carousel-hit-title">
+        <a
+          href={`/products.html?pid=${item.objectID}`}
+          className="ais-Carousel-hit-link"
+        >
+          {item.name}
+        </a>
+      </h2>
     </article>
   );
 }

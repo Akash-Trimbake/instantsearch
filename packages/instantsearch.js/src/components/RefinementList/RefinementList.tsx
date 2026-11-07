@@ -1,6 +1,6 @@
 /** @jsx h */
 
-import { cx } from '@algolia/ui-components-shared';
+import { cx } from 'instantsearch-ui-components';
 import { h, createRef, Component } from 'preact';
 
 import { isSpecialClick, isEqual } from '../../lib/utils';
@@ -66,6 +66,7 @@ export type RefinementListProps<TTemplates extends Templates> = {
   templateProps: PreparedTemplateProps<TTemplates>;
   toggleRefinement: (value: string) => void;
   showMore?: boolean;
+  showMoreButtonLabel?: string;
   toggleShowMore?: () => void;
   isShowingMore?: boolean;
   hasExhaustiveItems?: boolean;
@@ -79,6 +80,7 @@ export type RefinementListProps<TTemplates extends Templates> = {
   searchFacetValues?: (query: string) => void;
   searchPlaceholder?: string;
   searchBoxTemplateProps?: PreparedTemplateProps<SearchBoxComponentTemplates>;
+  searchableSelectOnSubmit?: boolean;
 };
 
 const defaultProps = {
@@ -108,7 +110,10 @@ class RefinementList<TTemplates extends Templates> extends Component<
 > {
   public static defaultProps = defaultProps;
 
+  private listRef = createRef<HTMLUListElement>();
   private searchBox = createRef<SearchBox>();
+
+  private lastRefinedValue: string | undefined = undefined;
 
   public shouldComponentUpdate(
     nextProps: RefinementListPropsWithDefaultProps<TTemplates>
@@ -122,6 +127,7 @@ class RefinementList<TTemplates extends Templates> extends Component<
   }
 
   private refine(facetValueToRefine: string) {
+    this.lastRefinedValue = facetValueToRefine;
     this.props.toggleRefinement(facetValueToRefine);
   }
 
@@ -172,8 +178,8 @@ class RefinementList<TTemplates extends Templates> extends Component<
       !facetValue.count && this.props.cssClasses.disabledItem,
       Boolean(
         isHierarchicalMenuItem(facetValue) &&
-          Array.isArray(facetValue.data) &&
-          facetValue.data.length > 0
+        Array.isArray(facetValue.data) &&
+        facetValue.data.length > 0
       ) && this.props.cssClasses.parentItem!
     );
 
@@ -222,29 +228,24 @@ class RefinementList<TTemplates extends Templates> extends Component<
       return;
     }
 
-    if (
-      !(originalEvent.target instanceof HTMLElement) ||
-      !(originalEvent.target.parentNode instanceof HTMLElement)
-    ) {
+    let parent = originalEvent.target as HTMLElement | null;
+
+    if (parent === null || parent.parentNode === null) {
       return;
     }
 
     if (
       isRefined &&
-      originalEvent.target.parentNode.querySelector(
-        'input[type="radio"]:checked'
-      )
+      parent.parentNode.querySelector('input[type="radio"]:checked')
     ) {
       // Prevent refinement for being reset if the user clicks on an already checked radio button
       return;
     }
 
-    if (originalEvent.target.tagName === 'INPUT') {
+    if (parent.tagName === 'INPUT') {
       this.refine(facetValueToRefine);
       return;
     }
-
-    let parent = originalEvent.target;
 
     while (parent !== originalEvent.currentTarget) {
       if (
@@ -275,7 +276,27 @@ class RefinementList<TTemplates extends Templates> extends Component<
     }
   }
 
+  /**
+   * This sets focus on the last refined input element after a render
+   * because Preact does not perform it automatically.
+   * @see https://github.com/preactjs/preact/issues/3242
+   */
+  public componentDidUpdate() {
+    const inputs = this.listRef.current?.getElementsByTagName('input') || [];
+    for (let i = 0; i < inputs.length; i++) {
+      if (inputs[i].value === this.lastRefinedValue) {
+        inputs[i].focus();
+        break;
+      }
+    }
+    this.lastRefinedValue = undefined;
+  }
+
   private refineFirstValue() {
+    if (this.props.searchableSelectOnSubmit === false) {
+      return;
+    }
+
     const firstValue = this.props.facetValues && this.props.facetValues[0];
     if (firstValue) {
       const actualValue = firstValue.value;
@@ -299,6 +320,8 @@ class RefinementList<TTemplates extends Templates> extends Component<
           className: showMoreButtonClassName,
           disabled: !this.props.canToggleShowMore,
           onClick: this.props.toggleShowMore,
+          'aria-expanded': Boolean(this.props.isShowingMore),
+          'aria-label': this.props.showMoreButtonLabel,
         }}
         data={{
           isShowingMore: this.props.isShowingMore,
@@ -335,7 +358,7 @@ class RefinementList<TTemplates extends Templates> extends Component<
 
     const facetValues = this.props.facetValues &&
       this.props.facetValues.length > 0 && (
-        <ul className={this.props.cssClasses.list}>
+        <ul ref={this.listRef} className={this.props.cssClasses.list}>
           {this.props.facetValues.map(this._generateFacetItem, this)}
         </ul>
       );

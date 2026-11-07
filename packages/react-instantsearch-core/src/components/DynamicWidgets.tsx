@@ -13,7 +13,7 @@ function DefaultFallbackComponent() {
 
 type AtLeastOne<
   TTarget,
-  TMapped = { [Key in keyof TTarget]: Pick<TTarget, Key> }
+  TMapped = { [Key in keyof TTarget]: Pick<TTarget, Key> },
 > = Partial<TTarget> & TMapped[keyof TMapped];
 
 export type DynamicWidgetsProps = Omit<
@@ -66,7 +66,9 @@ export function DynamicWidgets({
   );
 }
 
-function isReactElement(element: any): element is ReactElement {
+function isReactElement(
+  element: any
+): element is ReactElement<Record<string, any>> {
   return typeof element === 'object' && element.props;
 }
 

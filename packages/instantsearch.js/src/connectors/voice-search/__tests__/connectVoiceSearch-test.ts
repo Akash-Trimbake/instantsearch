@@ -1,3 +1,7 @@
+/**
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
+ */
+
 import { createSearchClient } from '@instantsearch/mocks';
 import algoliasearchHelper, { SearchParameters } from 'algoliasearch-helper';
 
@@ -472,6 +476,7 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/voice-searc
         new SearchParameters({
           ignorePlurals: true,
           removeStopWords: true,
+          // @ts-ignore we send optionalWords as a string
           optionalWords: 'query',
           queryLanguages: undefined,
           index: '',
@@ -494,6 +499,7 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/voice-searc
           queryLanguages: ['en'],
           // regular
           removeStopWords: true,
+          // @ts-ignore we send optionalWords as a string
           optionalWords: 'query',
           ignorePlurals: true,
           query: 'query',
@@ -516,6 +522,7 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/voice-searc
         new SearchParameters({
           ignorePlurals: true,
           removeStopWords: true,
+          // @ts-ignore we send optionalWords as a string
           optionalWords: 'query',
           queryLanguages: undefined,
           index: '',

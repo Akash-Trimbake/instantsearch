@@ -1,8 +1,8 @@
 import qs from 'qs';
 
-import { safelyRunOnBrowser, warning } from '../utils';
+import { createDocumentationLink, safelyRunOnBrowser, warning } from '../utils';
 
-import type { Router, UiState } from '../../types';
+import type { Router, RouterWriteOptions, UiState } from '../../types';
 
 type CreateURL<TRouteState> = (args: {
   qsModule: typeof qs;
@@ -27,7 +27,18 @@ export type BrowserHistoryArgs<TRouteState> = {
   start?: (onUpdate: () => void) => void;
   dispose?: () => void;
   push?: (url: string) => void;
+  /**
+   * Whether the URL should be cleaned up when the router is disposed.
+   * This can be useful when closing a modal containing InstantSearch, to
+   * remove active refinements from the URL.
+   * @default true
+   */
+  // @MAJOR: Switch the default to `false` and remove the console info in the next major version.
+  cleanUrlOnDispose?: boolean;
 };
+
+const isObject = (value: unknown): value is object =>
+  typeof value === 'object' && value !== null;
 
 const setWindowTitle = (title?: string): void => {
   if (title) {
@@ -79,9 +90,10 @@ class BrowserHistory<TRouteState> implements Router<TRouteState> {
   private _onPopState?: (event: PopStateEvent) => void;
 
   /**
-   * Indicates if last action was back/forward in the browser.
+   * The route states read on popstate (back/forward in the browser). A write
+   * applying one of them must not push it: the URL already reflects it.
    */
-  private inPopState: boolean = false;
+  private popStateRouteStates = new WeakSet<object>();
 
   /**
    * Indicates whether the history router is disposed or not.
@@ -97,10 +109,9 @@ class BrowserHistory<TRouteState> implements Router<TRouteState> {
   private latestAcknowledgedHistory: number = 0;
 
   private _start?: (onUpdate: () => void) => void;
-
   private _dispose?: () => void;
-
   private _push?: (url: string) => void;
+  private _cleanUrlOnDispose: boolean;
 
   /**
    * Initializes a new storage provider that syncs the search state to the URL
@@ -115,6 +126,7 @@ class BrowserHistory<TRouteState> implements Router<TRouteState> {
     start,
     dispose,
     push,
+    cleanUrlOnDispose,
   }: BrowserHistoryArgs<TRouteState>) {
     this.windowTitle = windowTitle;
     this.writeTimer = undefined;
@@ -125,12 +137,26 @@ class BrowserHistory<TRouteState> implements Router<TRouteState> {
     this._start = start;
     this._dispose = dispose;
     this._push = push;
+    this._cleanUrlOnDispose =
+      typeof cleanUrlOnDispose === 'undefined' ? true : cleanUrlOnDispose;
 
-    safelyRunOnBrowser(({ window }) => {
+    if (__DEV__ && typeof cleanUrlOnDispose === 'undefined') {
+      // eslint-disable-next-line no-console
+      console.info(`Starting from the next major version, InstantSearch will not clean up the URL from active refinements when it is disposed.
+
+We recommend setting \`cleanUrlOnDispose\` to false to adopt this change today.
+To stay with the current behaviour and remove this warning, set the option to true.
+
+See documentation: ${createDocumentationLink({
+        name: 'history-router',
+      })}#widget-param-cleanurlondispose`);
+    }
+
+    safelyRunOnBrowser(({ window: browserWindow }) => {
       const title = this.windowTitle && this.windowTitle(this.read());
       setWindowTitle(title);
 
-      this.latestAcknowledgedHistory = window.history.length;
+      this.latestAcknowledgedHistory = browserWindow.history.length;
     });
   }
 
@@ -144,10 +170,24 @@ class BrowserHistory<TRouteState> implements Router<TRouteState> {
   /**
    * Pushes a search state into the URL.
    */
-  public write(routeState: TRouteState): void {
-    safelyRunOnBrowser(({ window }) => {
+  public write(
+    routeState: TRouteState,
+    { source }: RouterWriteOptions<TRouteState> = {}
+  ): void {
+    safelyRunOnBrowser(({ window: browserWindow }) => {
       const url = this.createURL(routeState);
       const title = this.windowTitle && this.windowTitle(routeState);
+      // Without a source, the route state can be the one read on popstate.
+      const popStateRouteState = source === undefined ? routeState : source;
+      const causedByPopState =
+        isObject(popStateRouteState) &&
+        this.popStateRouteStates.has(popStateRouteState);
+
+      // Only this write is caused by the popstate, not later ones of the same
+      // route state object.
+      if (causedByPopState) {
+        this.popStateRouteStates.delete(popStateRouteState);
+      }
 
       if (this.writeTimer) {
         clearTimeout(this.writeTimer);
@@ -156,15 +196,14 @@ class BrowserHistory<TRouteState> implements Router<TRouteState> {
       this.writeTimer = setTimeout(() => {
         setWindowTitle(title);
 
-        if (this.shouldWrite(url)) {
+        if (!causedByPopState && this.shouldWrite(url)) {
           if (this._push) {
             this._push(url);
           } else {
-            window.history.pushState(routeState, title || '', url);
+            browserWindow.history.pushState(routeState, title || '', url);
           }
-          this.latestAcknowledgedHistory = window.history.length;
+          this.latestAcknowledgedHistory = browserWindow.history.length;
         }
-        this.inPopState = false;
         this.writeTimer = undefined;
       }, this.writeDelay);
     });
@@ -187,15 +226,19 @@ class BrowserHistory<TRouteState> implements Router<TRouteState> {
         this.writeTimer = undefined;
       }
 
-      this.inPopState = true;
-
       // We always read the state from the URL because the state of the history
       // can be incorect in some cases (e.g. using React Router).
-      callback(this.read());
+      const routeState = this.read();
+
+      if (isObject(routeState)) {
+        this.popStateRouteStates.add(routeState);
+      }
+
+      callback(routeState);
     };
 
-    safelyRunOnBrowser(({ window }) => {
-      window.addEventListener('popstate', this._onPopState!);
+    safelyRunOnBrowser(({ window: browserWindow }) => {
+      browserWindow.addEventListener('popstate', this._onPopState!);
     });
   }
 
@@ -240,9 +283,9 @@ Please make sure it returns an absolute URL to avoid issues, e.g: \`https://algo
 
     this.isDisposed = true;
 
-    safelyRunOnBrowser(({ window }) => {
+    safelyRunOnBrowser(({ window: browserWindow }) => {
       if (this._onPopState) {
-        window.removeEventListener('popstate', this._onPopState);
+        browserWindow.removeEventListener('popstate', this._onPopState);
       }
     });
 
@@ -250,7 +293,9 @@ Please make sure it returns an absolute URL to avoid issues, e.g: \`https://algo
       clearTimeout(this.writeTimer);
     }
 
-    this.write({} as TRouteState);
+    if (this._cleanUrlOnDispose) {
+      this.write({} as TRouteState);
+    }
   }
 
   public start() {
@@ -258,7 +303,12 @@ Please make sure it returns an absolute URL to avoid issues, e.g: \`https://algo
   }
 
   private shouldWrite(url: string): boolean {
-    return safelyRunOnBrowser(({ window }) => {
+    return safelyRunOnBrowser(({ window: browserWindow }) => {
+      // When disposed and the cleanUrlOnDispose is set to false, we do not want to write the URL.
+      if (this.isDisposed && !this._cleanUrlOnDispose) {
+        return false;
+      }
+
       // We do want to `pushState` if:
       // - the router is not disposed, IS.js needs to update the URL
       // OR
@@ -266,17 +316,14 @@ Please make sure it returns an absolute URL to avoid issues, e.g: \`https://algo
       // (unlike a SPA, where it would have last written)
       const lastPushWasByISAfterDispose = !(
         this.isDisposed &&
-        this.latestAcknowledgedHistory !== window.history.length
+        this.latestAcknowledgedHistory !== browserWindow.history.length
       );
 
       return (
-        // When the last state change was through popstate, the IS.js state changes,
-        // but that should not write the URL.
-        !this.inPopState &&
         // When the previous pushState after dispose was by IS.js, we want to write the URL.
         lastPushWasByISAfterDispose &&
         // When the URL is the same as the current one, we do not want to write it.
-        url !== window.location.href
+        url !== browserWindow.location.href
       );
     });
   }
@@ -313,17 +360,21 @@ export default function historyRouter<TRouteState = UiState>({
   writeDelay = 400,
   windowTitle,
   getLocation = () => {
-    return safelyRunOnBrowser<Location>(({ window }) => window.location, {
-      fallback: () => {
-        throw new Error(
-          'You need to provide `getLocation` to the `history` router in environments where `window` does not exist.'
-        );
-      },
-    });
+    return safelyRunOnBrowser<Location>(
+      ({ window: browserWindow }) => browserWindow.location,
+      {
+        fallback: () => {
+          throw new Error(
+            'You need to provide `getLocation` to the `history` router in environments where `window` does not exist.'
+          );
+        },
+      }
+    );
   },
   start,
   dispose,
   push,
+  cleanUrlOnDispose,
 }: Partial<BrowserHistoryArgs<TRouteState>> = {}): BrowserHistory<TRouteState> {
   return new BrowserHistory({
     createURL,
@@ -334,5 +385,6 @@ export default function historyRouter<TRouteState = UiState>({
     start,
     dispose,
     push,
+    cleanUrlOnDispose,
   });
 }

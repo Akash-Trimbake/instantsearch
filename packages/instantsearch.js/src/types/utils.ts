@@ -6,7 +6,7 @@ export type HighlightedParts = {
 // https://stackoverflow.com/questions/48230773/how-to-create-a-partial-like-that-requires-a-single-property-to-be-set/48244432#48244432
 export type AtLeastOne<
   TTarget,
-  TMapped = { [Key in keyof TTarget]: Pick<TTarget, Key> }
+  TMapped = { [Key in keyof TTarget]: Pick<TTarget, Key> },
 > = Partial<TTarget> & TMapped[keyof TMapped];
 
 // removes intermediary composed types in IntelliSense
@@ -24,3 +24,10 @@ export type Awaited<T> = T extends PromiseLike<infer U> ? Awaited<U> : T;
  */
 export type PartialKeys<TObj, TKeys extends keyof TObj> = Omit<TObj, TKeys> &
   Partial<Pick<TObj, TKeys>>;
+
+/**
+ * Make certain keys of an object writable (strip the `readonly` modifier).
+ */
+export type MutableKeys<TObj, TKeys extends keyof TObj> = Omit<TObj, TKeys> & {
+  -readonly [P in TKeys]: TObj[P];
+};

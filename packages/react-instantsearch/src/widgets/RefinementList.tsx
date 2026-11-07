@@ -5,7 +5,7 @@ import { RefinementList as RefinementListUiComponent } from '../ui/RefinementLis
 import { SearchBox as SearchBoxUiComponent } from '../ui/SearchBox';
 
 import type { RefinementListProps as RefinementListUiComponentProps } from '../ui/RefinementList';
-import type { SearchBoxTranslations } from '../ui/SearchBox';
+import type { SearchBoxProps } from '../ui/SearchBox';
 import type { RefinementListItem } from 'instantsearch.js/es/connectors/refinement-list/connectRefinementList';
 import type { RefinementListWidgetParams } from 'instantsearch.js/es/widgets/refinement-list/refinement-list';
 import type { UseRefinementListProps } from 'react-instantsearch-core';
@@ -29,21 +29,26 @@ export type RefinementListProps = Omit<
   keyof UiProps
 > &
   UseRefinementListProps &
-  Pick<RefinementListWidgetParams, 'searchable' | 'searchablePlaceholder'> & {
+  Pick<
+    RefinementListWidgetParams,
+    'searchable' | 'searchablePlaceholder' | 'searchableSelectOnSubmit'
+  > & {
     translations?: Partial<
-      UiProps['translations'] &
-        SearchBoxTranslations & {
-          /**
-           * What to display when there are no results.
-           */
-          noResultsText: string;
-        }
+      UiProps['translations'] & {
+        submitButtonTitle: string;
+        resetButtonTitle: string;
+        /**
+         * What to display when there are no results.
+         */
+        noResultsText: string;
+      }
     >;
   };
 
 export function RefinementList({
   searchable,
   searchablePlaceholder,
+  searchableSelectOnSubmit = true,
   attribute,
   operator,
   limit,
@@ -82,9 +87,11 @@ export function RefinementList({
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  function setQuery(newQuery: string) {
+  function setQuery(newQuery: string, compositionComplete = true) {
     setInputValue(newQuery);
-    searchForItems(newQuery);
+    if (compositionComplete) {
+      searchForItems(newQuery);
+    }
   }
 
   function onRefine(item: RefinementListItem) {
@@ -92,8 +99,14 @@ export function RefinementList({
     setQuery('');
   }
 
-  function onChange(event: React.ChangeEvent<HTMLInputElement>) {
-    setQuery(event.currentTarget.value);
+  function onChange(
+    event: Parameters<NonNullable<SearchBoxProps['onChange']>>[0]
+  ) {
+    const compositionComplete =
+      event.type === 'compositionend' ||
+      !(event.nativeEvent as KeyboardEvent).isComposing;
+
+    setQuery(event.currentTarget.value, compositionComplete);
   }
 
   function onReset() {
@@ -101,13 +114,21 @@ export function RefinementList({
   }
 
   function onSubmit() {
+    if (searchableSelectOnSubmit === false) {
+      return;
+    }
     if (items.length > 0) {
       refine(items[0].value);
       setQuery('');
     }
   }
 
-  const mergedTranslations: Required<RefinementListProps['translations']> = {
+  const mergedTranslations: Required<
+    Omit<
+      NonNullable<RefinementListProps['translations']>,
+      'showMoreButtonLabel'
+    >
+  > = {
     resetButtonTitle: 'Clear the search query',
     submitButtonTitle: 'Submit the search query',
     noResultsText: 'No results.',
@@ -147,6 +168,7 @@ export function RefinementList({
     isShowingMore,
     translations: {
       showMoreButtonText: mergedTranslations.showMoreButtonText,
+      showMoreButtonLabel: translations?.showMoreButtonLabel,
     },
   };
 

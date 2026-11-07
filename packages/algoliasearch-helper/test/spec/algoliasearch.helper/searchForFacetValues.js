@@ -56,6 +56,26 @@ test('searchForFacetValues calls the index method if no client method', function
   });
 });
 
+test('searchForFacetValues calls client.search if client.searchForFacets exists', function () {
+  var clientSearch = jest.fn(function () {
+    return Promise.resolve({
+      results: [makeFakeSearchForFacetValuesResponse()],
+    });
+  });
+
+  var fakeClient = {
+    searchForFacets: jest.fn(),
+    searchForFacetValues: jest.fn(),
+    search: clientSearch,
+  };
+
+  var helper = algoliasearchHelper(fakeClient, 'index');
+
+  return helper.searchForFacetValues('facet', 'query', 1).then(function () {
+    expect(clientSearch).toHaveBeenCalledTimes(1);
+  });
+});
+
 test('searchForFacetValues resolve with the correct response from client', function () {
   var fakeClient = {
     addAlgoliaAgent: function () {},
@@ -472,4 +492,169 @@ test('escaped value is marked as refined', function () {
       ],
     });
   });
+});
+
+test('hides a facet value that is hidden according to `renderingContent`', function () {
+  var fakeClient = {
+    addAlgoliaAgent: function () {},
+    search: function () {
+      return Promise.resolve({
+        results: [
+          {
+            index: 'index',
+            renderingContent: {
+              facetOrdering: {
+                values: {
+                  facet: {
+                    hide: ['hidden'],
+                  },
+                },
+              },
+            },
+          },
+        ],
+      });
+    },
+    searchForFacetValues: function () {
+      return Promise.resolve([
+        {
+          exhaustiveFacetsCount: true,
+          facetHits: [
+            {
+              count: 1,
+              highlighted: 'hidden',
+              value: 'hidden',
+            },
+            {
+              count: 318,
+              highlighted: 'something',
+              value: 'something',
+            },
+          ],
+          processingTimeMS: 3,
+        },
+      ]);
+    },
+  };
+
+  var helper = algoliasearchHelper(fakeClient, 'index', {
+    disjunctiveFacets: ['facet'],
+    renderingContent: {
+      facetValues: [
+        {
+          name: 'something',
+          isRefined: true,
+        },
+      ],
+    },
+  });
+
+  return new Promise(function (res) {
+    helper.search();
+    helper.once('result', res);
+  })
+    .then(function () {
+      return helper.searchForFacetValues('facet', 'k', 1);
+    })
+    .then(function (content) {
+      expect(content).toEqual({
+        exhaustiveFacetsCount: true,
+        processingTimeMS: 3,
+        facetHits: [
+          {
+            count: 318,
+            highlighted: 'something',
+            isRefined: false,
+            escapedValue: 'something',
+            value: 'something',
+          },
+        ],
+      });
+    });
+});
+
+test('does not hide if last results are for another index', function () {
+  var fakeClient = {
+    addAlgoliaAgent: function () {},
+    search: function () {
+      return Promise.resolve({
+        results: [
+          {
+            index: 'index',
+            renderingContent: {
+              facetOrdering: {
+                values: {
+                  facet: {
+                    hide: ['hidden'],
+                  },
+                },
+              },
+            },
+          },
+        ],
+      });
+    },
+    searchForFacetValues: function () {
+      return Promise.resolve([
+        {
+          exhaustiveFacetsCount: true,
+          facetHits: [
+            {
+              count: 1,
+              highlighted: 'hidden',
+              value: 'hidden',
+            },
+            {
+              count: 318,
+              highlighted: 'something',
+              value: 'something',
+            },
+          ],
+          processingTimeMS: 3,
+        },
+      ]);
+    },
+  };
+
+  var helper = algoliasearchHelper(fakeClient, 'index', {
+    disjunctiveFacets: ['facet'],
+    renderingContent: {
+      facetValues: [
+        {
+          name: 'something',
+          isRefined: true,
+        },
+      ],
+    },
+  });
+
+  return new Promise(function (res) {
+    helper.search();
+    helper.once('result', res);
+  })
+    .then(function () {
+      return helper.searchForFacetValues('facet', 'k', 1, { index: 'index2' });
+    })
+    .then(function (content) {
+      expect(content).toEqual({
+        exhaustiveFacetsCount: true,
+        processingTimeMS: 3,
+        facetHits: [
+          {
+            count: 1,
+            highlighted: 'hidden',
+            isRefined: false,
+            escapedValue: 'hidden',
+            value: 'hidden',
+          },
+          {
+            count: 318,
+            highlighted: 'something',
+            isRefined: false,
+            escapedValue: 'something',
+            value: 'something',
+          },
+        ],
+      });
+    });
 });

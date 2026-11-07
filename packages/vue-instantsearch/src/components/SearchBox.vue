@@ -13,6 +13,7 @@
         :autofocus="autofocus"
         :show-loading-indicator="showLoadingIndicator"
         :should-show-loading-indicator="state.isSearchStalled"
+        :ignore-composition-events="ignoreCompositionEvents"
         :submit-title="submitTitle"
         :reset-title="resetTitle"
         :class-names="classNames"
@@ -39,7 +40,7 @@
 </template>
 
 <script>
-import { connectSearchBox } from 'instantsearch.js/es/connectors';
+import { connectSearchBox } from 'instantsearch.js/es/connectors/index';
 
 import { createSuitMixin } from '../mixins/suit';
 import { createWidgetMixin } from '../mixins/widget';
@@ -75,6 +76,10 @@ export default {
     showLoadingIndicator: {
       type: Boolean,
       default: true,
+    },
+    ignoreCompositionEvents: {
+      type: Boolean,
+      default: false,
     },
     submitTitle: {
       type: String,

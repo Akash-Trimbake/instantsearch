@@ -3,6 +3,7 @@
 var path = require('path');
 
 var algoliasearch = require('algoliasearch');
+algoliasearch = algoliasearch.algoliasearch || algoliasearch;
 var jest = require('jest');
 
 var staticJestConfig = require('../jest.config');
@@ -37,11 +38,18 @@ jest.runCLI(dynamicJestConfig, projectsRootPaths).then(function (response) {
       process.env.INTEGRATION_TEST_APPID,
       process.env.INTEGRATION_TEST_API_KEY
     );
-    client.deleteIndex =
-      client.deleteIndex ||
-      function (deleteIndexName) {
+    var originalDeleteIndex = client.deleteIndex
+      ? client.deleteIndex.bind(client)
+      : undefined;
+    client.deleteIndex = function (deleteIndexName) {
+      if (!originalDeleteIndex) {
         return client.initIndex(deleteIndexName).delete();
-      };
+      }
+      if (!client.initIndex) {
+        return originalDeleteIndex({ indexName: deleteIndexName });
+      }
+      return originalDeleteIndex(deleteIndexName);
+    };
     client.listIndexes = client.listIndexes || client.listIndices;
 
     client.listIndexes().then((content) => {

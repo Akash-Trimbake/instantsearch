@@ -11,11 +11,6 @@ a[class^='ais-'] {
 }
 
 /*
-  We need to target the root element because Angular InstantSearch
-  creates web components which are not targetable with the `*` selector.
-*/
-[class^='ais-'][class$='--disabled'],
-/*
   We need to target all elements for widgets containing
   multiple sub elements (e.g. RangeSlider)
 */
@@ -375,7 +370,8 @@ a[class^='ais-'] {
 .ais-ToggleRefinement-checkbox::after {
   background-image: linear-gradient(to top, #f5f5fa, #fff);
   border-radius: 100%;
-  box-shadow: 0 4px 11px 0 rgba(37, 44, 97, 0.15),
+  box-shadow:
+    0 4px 11px 0 rgba(37, 44, 97, 0.15),
     0 2px 3px 0 rgba(93, 100, 148, 0.2);
   content: '';
   height: 16px;
@@ -445,7 +441,8 @@ a[class^='ais-'] {
 .ais-RangeSlider .rheostat-handle {
   background-image: linear-gradient(to top, #f5f5fa, #fff);
   border: none;
-  box-shadow: 0 4px 11px 0 rgba(37, 44, 97, 0.15),
+  box-shadow:
+    0 4px 11px 0 rgba(37, 44, 97, 0.15),
     0 2px 3px 0 rgba(93, 100, 148, 0.2);
   margin-left: -5px;
   top: -9px;

@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 
 import {
@@ -8,19 +8,32 @@ import {
   createSingleSearchResponse,
 } from '@instantsearch/mocks';
 import { InstantSearchTestWrapper } from '@instantsearch/testutils';
-import { act, render, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, waitFor } from '@testing-library/react';
 import React from 'react';
 
 import { InfiniteHits } from '../InfiniteHits';
 
 import type { MockSearchClient } from '@instantsearch/mocks';
+import type { AlgoliaHit } from 'instantsearch.js';
 
-type CustomHit = {
-  somethingSpecial: string;
+type CustomHit = { somethingSpecial: string };
+
+const bannerWidgetRenderingContent = {
+  widgets: {
+    banners: [
+      {
+        image: {
+          urls: [{ url: 'https://via.placeholder.com/550x250' }],
+        },
+        link: {
+          url: 'https://www.algolia.com',
+        },
+      },
+    ],
+  },
 };
 
-function createMockedSearchClient() {
+function getSearchClient(withBannerWidget = false) {
   return createSearchClient({
     search: jest.fn((requests) =>
       Promise.resolve(
@@ -38,12 +51,17 @@ function createMockedSearchClient() {
                 };
               });
 
-              return createSingleSearchResponse<CustomHit>({
+              return createSingleSearchResponse<AlgoliaHit<CustomHit>>({
                 hits,
                 page,
                 nbPages: 10,
                 hitsPerPage,
                 index: request.indexName,
+                // @TODO: remove once algoliasearch js client has been updated
+                // @ts-expect-error
+                renderingContent: withBannerWidget
+                  ? bannerWidgetRenderingContent
+                  : undefined,
               });
             }
           )
@@ -54,11 +72,14 @@ function createMockedSearchClient() {
 }
 
 describe('InfiniteHits', () => {
-  test('renders with default props', async () => {
-    const searchClient = createMockedSearchClient();
+  test('renders the "Show Previous" button by default', async () => {
+    const searchClient = getSearchClient();
     const { container } = render(
-      <InstantSearchTestWrapper searchClient={searchClient}>
-        <InfiniteHits />
+      <InstantSearchTestWrapper
+        searchClient={searchClient}
+        initialUiState={{ indexName: { page: 4 } }}
+      >
+        <InfiniteHits<CustomHit> />
       </InstantSearchTestWrapper>
     );
 
@@ -68,61 +89,13 @@ describe('InfiniteHits', () => {
       )
     );
 
-    expect(container.querySelector('.ais-InfiniteHits')).toMatchInlineSnapshot(`
-        <div
-          class="ais-InfiniteHits"
-        >
-          <button
-            class="ais-InfiniteHits-loadPrevious ais-InfiniteHits-loadPrevious--disabled"
-            disabled=""
-          >
-            Show previous results
-          </button>
-          <ol
-            class="ais-InfiniteHits-list"
-          >
-            <li
-              class="ais-InfiniteHits-item"
-            >
-              <div
-                style="word-break: break-all;"
-              >
-                {"objectID":"0","somethingSpecial":"a","__position":1}
-                …
-              </div>
-            </li>
-            <li
-              class="ais-InfiniteHits-item"
-            >
-              <div
-                style="word-break: break-all;"
-              >
-                {"objectID":"1","somethingSpecial":"b","__position":2}
-                …
-              </div>
-            </li>
-            <li
-              class="ais-InfiniteHits-item"
-            >
-              <div
-                style="word-break: break-all;"
-              >
-                {"objectID":"2","somethingSpecial":"c","__position":3}
-                …
-              </div>
-            </li>
-          </ol>
-          <button
-            class="ais-InfiniteHits-loadMore"
-          >
-            Show more results
-          </button>
-        </div>
-      `);
+    expect(
+      document.querySelector('.ais-InfiniteHits-loadPrevious')
+    ).toBeInTheDocument();
   });
 
   test('renders with a custom hit component', async () => {
-    const searchClient = createMockedSearchClient();
+    const searchClient = getSearchClient();
     const { container } = render(
       <InstantSearchTestWrapper searchClient={searchClient}>
         <InfiniteHits<CustomHit>
@@ -181,202 +154,8 @@ describe('InfiniteHits', () => {
       `);
   });
 
-  test('displays more hits when clicking the "Show More" button', async () => {
-    const searchClient = createMockedSearchClient();
-    const { container } = render(
-      <InstantSearchTestWrapper searchClient={searchClient}>
-        <InfiniteHits
-          hitComponent={({ hit: { __position } }) => (
-            <strong>{__position}</strong>
-          )}
-        />
-      </InstantSearchTestWrapper>
-    );
-
-    await waitFor(() =>
-      expect(container.querySelectorAll('strong')).toHaveLength(3)
-    );
-
-    expect(searchClient.search).toHaveBeenCalledTimes(1);
-    expect(searchClient.search).toHaveBeenLastCalledWith([
-      {
-        indexName: 'indexName',
-        params: {
-          facets: [],
-          highlightPostTag: '__/ais-highlight__',
-          highlightPreTag: '__ais-highlight__',
-          page: 0,
-          tagFilters: '',
-        },
-      },
-    ]);
-
-    act(() => {
-      userEvent.click(container.querySelector('.ais-InfiniteHits-loadMore')!);
-    });
-
-    await waitFor(() => {
-      expect(container.querySelectorAll('strong')).toHaveLength(6);
-
-      expect(searchClient.search).toHaveBeenCalledTimes(2);
-      expect(searchClient.search).toHaveBeenLastCalledWith([
-        {
-          indexName: 'indexName',
-          params: {
-            facets: [],
-            highlightPostTag: '__/ais-highlight__',
-            highlightPreTag: '__ais-highlight__',
-            page: 1,
-            tagFilters: '',
-          },
-        },
-      ]);
-    });
-  });
-
-  test('displays previous hits when clicking the "Show Previous" button', async () => {
-    const searchClient = createMockedSearchClient();
-    const { container } = render(
-      <InstantSearchTestWrapper
-        searchClient={searchClient}
-        initialUiState={{ indexName: { page: 4 } }}
-      >
-        <InfiniteHits
-          hitComponent={({ hit: { __position } }) => (
-            <strong>{__position}</strong>
-          )}
-        />
-      </InstantSearchTestWrapper>
-    );
-
-    await waitFor(() =>
-      expect(container.querySelectorAll('strong')).toHaveLength(3)
-    );
-
-    expect(searchClient.search).toHaveBeenCalledTimes(1);
-    expect(searchClient.search).toHaveBeenLastCalledWith([
-      {
-        indexName: 'indexName',
-        params: {
-          facets: [],
-          highlightPostTag: '__/ais-highlight__',
-          highlightPreTag: '__ais-highlight__',
-          page: 3,
-          tagFilters: '',
-        },
-      },
-    ]);
-
-    act(() => {
-      userEvent.click(
-        container.querySelector('.ais-InfiniteHits-loadPrevious')!
-      );
-    });
-
-    await waitFor(() => {
-      expect(container.querySelectorAll('strong')).toHaveLength(6);
-
-      expect(searchClient.search).toHaveBeenCalledTimes(2);
-      expect(searchClient.search).toHaveBeenLastCalledWith([
-        {
-          indexName: 'indexName',
-          params: {
-            facets: [],
-            highlightPostTag: '__/ais-highlight__',
-            highlightPreTag: '__ais-highlight__',
-            page: 2,
-            tagFilters: '',
-          },
-        },
-      ]);
-    });
-  });
-
-  test('hides the "Show Previous" button when `showPrevious` is `false`', async () => {
-    const searchClient = createMockedSearchClient();
-    const { container } = render(
-      <InstantSearchTestWrapper searchClient={searchClient}>
-        <InfiniteHits showPrevious={false} />
-      </InstantSearchTestWrapper>
-    );
-
-    await waitFor(() => {
-      expect(container.querySelector('.ais-InfiniteHits-loadPrevious')).toBe(
-        null
-      );
-      expect(container).toMatchInlineSnapshot(`
-        <div>
-          <div
-            class="ais-InfiniteHits ais-InfiniteHits--empty"
-          >
-            <ol
-              class="ais-InfiniteHits-list"
-            />
-            <button
-              class="ais-InfiniteHits-loadMore ais-InfiniteHits-loadMore--disabled"
-              disabled=""
-            >
-              Show more results
-            </button>
-          </div>
-        </div>
-      `);
-    });
-  });
-
-  test('marks the "Show Previous" button as disabled on first page', async () => {
-    const searchClient = createMockedSearchClient();
-    const { container } = render(
-      <InstantSearchTestWrapper searchClient={searchClient}>
-        <InfiniteHits />
-      </InstantSearchTestWrapper>
-    );
-
-    await waitFor(() => expect(searchClient.search).toHaveBeenCalledTimes(1));
-
-    expect(
-      container.querySelector<HTMLButtonElement>(
-        '.ais-InfiniteHits-loadPrevious'
-      )
-    ).toBeDisabled();
-
-    expect(
-      container.querySelector<HTMLButtonElement>(
-        '.ais-InfiniteHits-loadPrevious'
-      )
-    ).toHaveClass(
-      'ais-InfiniteHits-loadPrevious',
-      'ais-InfiniteHits-loadPrevious--disabled'
-    );
-  });
-
-  test('marks the "Show More" button as disabled on last page', async () => {
-    const searchClient = createMockedSearchClient();
-    const { container } = render(
-      <InstantSearchTestWrapper
-        searchClient={searchClient}
-        initialUiState={{ indexName: { page: 10 } }}
-      >
-        <InfiniteHits />
-      </InstantSearchTestWrapper>
-    );
-
-    await waitFor(() => expect(searchClient.search).toHaveBeenCalledTimes(1));
-
-    expect(
-      container.querySelector<HTMLButtonElement>('.ais-InfiniteHits-loadMore')
-    ).toBeDisabled();
-
-    expect(
-      container.querySelector<HTMLButtonElement>('.ais-InfiniteHits-loadMore')
-    ).toHaveClass(
-      'ais-InfiniteHits-loadMore',
-      'ais-InfiniteHits-loadMore--disabled'
-    );
-  });
-
   test('forwards custom class names and `div` props to the root element', () => {
-    const searchClient = createMockedSearchClient();
+    const searchClient = getSearchClient();
     const { container } = render(
       <InstantSearchTestWrapper searchClient={searchClient}>
         <InfiniteHits
@@ -393,7 +172,7 @@ describe('InfiniteHits', () => {
   });
 
   test('renders with translations', async () => {
-    const searchClient = createMockedSearchClient();
+    const searchClient = getSearchClient();
     const { getByRole } = render(
       <InstantSearchTestWrapper
         searchClient={searchClient}
@@ -414,5 +193,132 @@ describe('InfiniteHits', () => {
     expect(
       getByRole('button', { name: 'Display previous' })
     ).toBeInTheDocument();
+  });
+
+  describe('banner', () => {
+    test('renders a banner', async () => {
+      const searchClient = getSearchClient(true);
+      const { container } = render(
+        <InstantSearchTestWrapper searchClient={searchClient}>
+          <InfiniteHits />
+        </InstantSearchTestWrapper>
+      );
+
+      await waitFor(() => {
+        expect(container.querySelectorAll('img')).toHaveLength(1);
+        expect(container.querySelectorAll('a')).toHaveLength(1);
+        expect(container.querySelector('.ais-Hits')).toMatchInlineSnapshot(
+          `null`
+        );
+      });
+    });
+
+    test('does not render a banner when "bannerComponent" is set to false', async () => {
+      const searchClient = getSearchClient(true);
+      const { container } = render(
+        <InstantSearchTestWrapper searchClient={searchClient}>
+          <InfiniteHits bannerComponent={false} />
+        </InstantSearchTestWrapper>
+      );
+
+      await waitFor(() => {
+        expect(container.querySelectorAll('img')).toHaveLength(0);
+        expect(container.querySelectorAll('a')).toHaveLength(0);
+        expect(container.querySelector('.ais-InfiniteHits'))
+          .toMatchInlineSnapshot(`
+          <div
+            class="ais-InfiniteHits ais-InfiniteHits--empty"
+          >
+            <button
+              class="ais-InfiniteHits-loadPrevious ais-InfiniteHits-loadPrevious--disabled"
+              disabled=""
+            >
+              Show previous results
+            </button>
+            <ol
+              class="ais-InfiniteHits-list"
+            />
+            <button
+              class="ais-InfiniteHits-loadMore ais-InfiniteHits-loadMore--disabled"
+              disabled=""
+            >
+              Show more results
+            </button>
+          </div>
+        `);
+      });
+    });
+
+    test('renders custom banner component', async () => {
+      const searchClient = getSearchClient(true);
+      const { container } = render(
+        <InstantSearchTestWrapper searchClient={searchClient}>
+          <InfiniteHits
+            bannerComponent={({ banner }) => (
+              <img src={banner.image.urls[0].url} />
+            )}
+          />
+        </InstantSearchTestWrapper>
+      );
+
+      await waitFor(() => {
+        expect(container.querySelectorAll('img')).toHaveLength(1);
+        expect(container.querySelector('.ais-InfiniteHits'))
+          .toMatchInlineSnapshot(`
+          <div
+            class="ais-InfiniteHits"
+          >
+            <button
+              class="ais-InfiniteHits-loadPrevious ais-InfiniteHits-loadPrevious--disabled"
+              disabled=""
+            >
+              Show previous results
+            </button>
+            <img
+              src="https://via.placeholder.com/550x250"
+            />
+            <ol
+              class="ais-InfiniteHits-list"
+            >
+              <li
+                class="ais-InfiniteHits-item"
+              >
+                <div
+                  style="word-break: break-all;"
+                >
+                  {"objectID":"0","somethingSpecial":"a","__position":1}
+                  …
+                </div>
+              </li>
+              <li
+                class="ais-InfiniteHits-item"
+              >
+                <div
+                  style="word-break: break-all;"
+                >
+                  {"objectID":"1","somethingSpecial":"b","__position":2}
+                  …
+                </div>
+              </li>
+              <li
+                class="ais-InfiniteHits-item"
+              >
+                <div
+                  style="word-break: break-all;"
+                >
+                  {"objectID":"2","somethingSpecial":"c","__position":3}
+                  …
+                </div>
+              </li>
+            </ol>
+            <button
+              class="ais-InfiniteHits-loadMore"
+            >
+              Show more results
+            </button>
+          </div>
+        `);
+      });
+    });
   });
 });

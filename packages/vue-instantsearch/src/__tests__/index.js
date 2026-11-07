@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 
 /* eslint-disable jest/no-conditional-expect */
@@ -78,6 +78,29 @@ function getAllComponents() {
         props.trackedFilters = {};
       } else if (name === 'AisIndex') {
         props.indexName = 'indexName';
+      } else if (name === 'AisFeeds') {
+        props.isolated = false;
+      } else if (
+        name === 'AisRelatedProducts' ||
+        name === 'AisFrequentlyBoughtTogether' ||
+        name === 'AisLookingSimilar'
+      ) {
+        props.objectIDs = ['1'];
+      } else if (name === 'AisTrendingFacets') {
+        props.facetName = 'brand';
+      } else if (name === 'AisChat') {
+        // A transport avoids the agentId appId/apiKey requirement; the trigger
+        // validation is disabled since no ChatTrigger is mounted here.
+        props.transport = {};
+        props.disableTriggerValidation = true;
+      } else if (name === 'AisCompareBar') {
+        props.configurationId = 'configurationId';
+      } else if (name === 'AisResultCard') {
+        // Like `AisChat`, a transport avoids the appId/apiKey requirement.
+        props.agentId = 'agentId';
+        props.transport = {};
+      } else if (name === 'AisTrendingItems' || name === 'AisChatTrigger') {
+        // no required props
       } else {
         props.attribute = 'attr';
       }
@@ -88,7 +111,9 @@ function getAllComponents() {
             AisInstantSearch,
             {
               props: {
-                indexName: 'instant_search',
+                ...(name === 'AisFeeds'
+                  ? { compositionID: 'my-composition' }
+                  : { indexName: 'instant_search' }),
                 searchClient: {
                   search() {
                     return new Promise({ results: [] });
@@ -143,6 +168,11 @@ describe('DOM component', () => {
         expect(suitClass).toBe(`ais-InstantSearch`);
       } else if (name === 'AisExperimentalDynamicWidgets') {
         expect(suitClass).toBe(`ais-DynamicWidgets`);
+      } else if (name === 'AisChatTrigger') {
+        // Renders the shared ChatToggleButton markup.
+        expect(suitClass).toBe(`ais-ChatToggleButton`);
+      } else if (name === 'AisExperimentalAutocomplete') {
+        expect(suitClass).toBe(`ais-Autocomplete`);
       } else {
         expect(suitClass).toBe(`ais-${name.substr(3)}`);
       }
@@ -160,6 +190,8 @@ describe('installed widget', () => {
       expect(widget.$$widgetType).toBe('ais.dynamicWidgets');
     } else if (name === 'AisExperimentalConfigureRelatedItems') {
       expect(widget.$$widgetType).toBe('ais.configureRelatedItems');
+    } else if (name === 'AisExperimentalAutocomplete') {
+      expect(widget.$$widgetType).toBe('ais.autocomplete');
     } else {
       expect(widget.$$widgetType).toBe(
         `ais.${name[3].toLowerCase()}${name.substr(4)}`

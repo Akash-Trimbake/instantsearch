@@ -1,18 +1,21 @@
-/**
- * @jest-environment node
- */
-
 import { getAllInstantSearchWidgets } from './__utils__/all-widgets';
 
 describe('widgets', () => {
   const widgets = getAllInstantSearchWidgets();
+
+  const customExpectedLength: Partial<
+    Record<(typeof widgets)[0]['name'], number>
+  > = {
+    // searchbox only (the isolated index attaches lazily on first focus)
+    Autocomplete: 1,
+  };
 
   test('renders one widget', () => {
     widgets.forEach(({ name, renderedWidgets }) => {
       expect({ name, renderedWidgets }).toEqual({
         name,
         renderedWidgets: expect.objectContaining({
-          length: 1,
+          length: customExpectedLength[name] ?? 1,
         }),
       });
     });
@@ -29,7 +32,7 @@ describe('widgets', () => {
 
     test('starts with "ais."', () => {
       widgets.forEach(({ name, widget }) =>
-        expect([name, widget.$$type.substr(0, 4)]).toEqual([name, 'ais.'])
+        expect([name, widget.$$type.substring(0, 4)]).toEqual([name, 'ais.'])
       );
     });
   });
@@ -43,7 +46,7 @@ describe('widgets', () => {
 
     test('starts with "ais."', () => {
       widgets.forEach(({ name, widget }) =>
-        expect([name, widget.$$widgetType!.substr(0, 4)]).toEqual([
+        expect([name, widget.$$widgetType!.substring(0, 4)]).toEqual([
           name,
           'ais.',
         ])
@@ -61,9 +64,34 @@ describe('widgets', () => {
     ).toMatchInlineSnapshot(`
       [
         {
+          "$$type": "ais.autocomplete",
+          "$$widgetType": "ais.autocomplete",
+          "name": "Autocomplete",
+        },
+        {
           "$$type": "ais.breadcrumb",
           "$$widgetType": "ais.breadcrumb",
           "name": "Breadcrumb",
+        },
+        {
+          "$$type": "ais.promptSuggestions",
+          "$$widgetType": "ais.promptSuggestions",
+          "name": "PromptSuggestions",
+        },
+        {
+          "$$type": "ais.resultCard",
+          "$$widgetType": "ais.resultCard",
+          "name": "ResultCard",
+        },
+        {
+          "$$type": "ais.chatTrigger",
+          "$$widgetType": "ais.chatTrigger",
+          "name": "ChatTrigger",
+        },
+        {
+          "$$type": "ais.compare",
+          "$$widgetType": "ais.compareBar",
+          "name": "CompareBar",
         },
         {
           "$$type": "ais.clearRefinements",
@@ -74,6 +102,11 @@ describe('widgets', () => {
           "$$type": "ais.currentRefinements",
           "$$widgetType": "ais.currentRefinements",
           "name": "CurrentRefinements",
+        },
+        {
+          "$$type": "ais.frequentlyBoughtTogether",
+          "$$widgetType": "ais.frequentlyBoughtTogether",
+          "name": "FrequentlyBoughtTogether",
         },
         {
           "$$type": "ais.hierarchicalMenu",
@@ -96,6 +129,11 @@ describe('widgets', () => {
           "name": "InfiniteHits",
         },
         {
+          "$$type": "ais.lookingSimilar",
+          "$$widgetType": "ais.lookingSimilar",
+          "name": "LookingSimilar",
+        },
+        {
           "$$type": "ais.menu",
           "$$widgetType": "ais.menu",
           "name": "Menu",
@@ -116,6 +154,11 @@ describe('widgets', () => {
           "name": "RefinementList",
         },
         {
+          "$$type": "ais.relatedProducts",
+          "$$widgetType": "ais.relatedProducts",
+          "name": "RelatedProducts",
+        },
+        {
           "$$type": "ais.searchBox",
           "$$widgetType": "ais.searchBox",
           "name": "SearchBox",
@@ -134,6 +177,21 @@ describe('widgets', () => {
           "$$type": "ais.toggleRefinement",
           "$$widgetType": "ais.toggleRefinement",
           "name": "ToggleRefinement",
+        },
+        {
+          "$$type": "ais.trendingItems",
+          "$$widgetType": "ais.trendingItems",
+          "name": "TrendingItems",
+        },
+        {
+          "$$type": "ais.trendingFacets",
+          "$$widgetType": "ais.trendingFacets",
+          "name": "TrendingFacets",
+        },
+        {
+          "$$type": "ais.filterSuggestions",
+          "$$widgetType": "ais.filterSuggestions",
+          "name": "FilterSuggestions",
         },
       ]
     `);

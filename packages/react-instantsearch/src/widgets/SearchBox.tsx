@@ -1,9 +1,11 @@
+import { isChatBusy, openChat } from 'instantsearch.js/es/lib/chat';
 import React, { useRef, useState } from 'react';
-import { useSearchBox } from 'react-instantsearch-core';
+import { useInstantSearch, useSearchBox } from 'react-instantsearch-core';
 
 import { SearchBox as SearchBoxUiComponent } from '../ui/SearchBox';
 
 import type { SearchBoxProps as SearchBoxUiComponentProps } from '../ui/SearchBox';
+import type { ChatRenderState } from 'instantsearch.js/es/connectors/chat/connectChat';
 import type { UseSearchBoxProps } from 'react-instantsearch-core';
 
 type UiProps = Pick<
@@ -13,6 +15,8 @@ type UiProps = Pick<
   | 'onChange'
   | 'onReset'
   | 'onSubmit'
+  | 'onAiModeClick'
+  | 'aiModeButtonDisabled'
   | 'value'
   | 'autoFocus'
   | 'translations'
@@ -28,26 +32,44 @@ export type SearchBoxProps = Omit<
      * @default true
      */
     searchAsYouType?: boolean;
+    /**
+     * Whether to update the search state in the middle of a
+     * composition session.
+     * @default false
+     */
+    ignoreCompositionEvents?: boolean;
+    /**
+     * When true, renders an AI mode button inside the search box
+     * that opens the Chat widget and sends the current query.
+     * Requires a Chat widget on the same index.
+     */
+    aiMode?: boolean;
     translations?: Partial<UiProps['translations']>;
   };
 
 export function SearchBox({
   queryHook,
   searchAsYouType = true,
+  ignoreCompositionEvents = false,
+  aiMode,
   translations,
   ...props
 }: SearchBoxProps) {
   const { query, refine, isSearchStalled } = useSearchBox(
     { queryHook },
-    { $$widgetType: 'ais.searchBox' }
+    {
+      $$widgetType: 'ais.searchBox',
+      ...(aiMode ? { opensChat: true } : {}),
+    }
   );
+  const { indexRenderState } = useInstantSearch();
   const [inputValue, setInputValue] = useState(query);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  function setQuery(newQuery: string) {
+  function setQuery(newQuery: string, isComposing = false) {
     setInputValue(newQuery);
 
-    if (searchAsYouType) {
+    if (searchAsYouType && !(ignoreCompositionEvents && isComposing)) {
       refine(newQuery);
     }
   }
@@ -60,8 +82,13 @@ export function SearchBox({
     }
   }
 
-  function onChange(event: React.ChangeEvent<HTMLInputElement>) {
-    setQuery(event.currentTarget.value);
+  function onChange(
+    event: Parameters<NonNullable<SearchBoxUiComponentProps['onChange']>>[0]
+  ) {
+    setQuery(
+      event.currentTarget.value,
+      (event.nativeEvent as KeyboardEvent).isComposing
+    );
   }
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -82,16 +109,34 @@ export function SearchBox({
     setInputValue(query);
   }
 
+  const chatRenderState = indexRenderState.chat as
+    | Partial<ChatRenderState>
+    | undefined;
+
   const uiProps: UiProps = {
     inputRef,
     isSearchStalled,
     onChange,
     onReset,
     onSubmit,
+    onAiModeClick: aiMode
+      ? () => {
+          if (
+            openChat(chatRenderState, {
+              message: inputValue,
+              referer: 'ai-mode',
+            })
+          ) {
+            onReset();
+          }
+        }
+      : undefined,
+    aiModeButtonDisabled: aiMode ? isChatBusy(chatRenderState) : undefined,
     value: inputValue,
     translations: {
       submitButtonTitle: 'Submit the search query',
       resetButtonTitle: 'Clear the search query',
+      aiModeButtonTitle: 'AI Mode',
       ...translations,
     },
   };

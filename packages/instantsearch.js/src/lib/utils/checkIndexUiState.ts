@@ -2,8 +2,7 @@ import { capitalize } from './capitalize';
 import { warning } from './logger';
 import { keys } from './typedObject';
 
-import type { Widget, IndexUiState } from '../../types';
-import type { IndexWidget } from '../../widgets/index/index';
+import type { Widget, IndexUiState, IndexWidget } from '../../types';
 
 // Some connectors are responsible for multiple widgets so we need
 // to map them.
@@ -171,7 +170,7 @@ ${missingWidgets
     return connectors.length > 0;
   })
   .map(([_stateParameter, { connectors, widgets }]) => {
-    const capitalizedWidget = capitalize(widgets[0]!);
+    const capitalizedWidget = capitalize(widgets[0]);
     const connectorName = connectors[0];
 
     return `const virtual${capitalizedWidget} = ${connectorName}(() => null);`;
@@ -184,7 +183,7 @@ search.addWidgets([
       return connectors.length > 0;
     })
     .map(([_stateParameter, { widgets }]) => {
-      const capitalizedWidget = capitalize(widgets[0]!);
+      const capitalizedWidget = capitalize(widgets[0]);
 
       return `virtual${capitalizedWidget}({ /* ... */ })`;
     })

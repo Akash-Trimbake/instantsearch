@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 
 import { render } from '@testing-library/react';
@@ -80,7 +80,7 @@ describe('HierarchicalMenu', () => {
             class="ais-HierarchicalMenu-list"
           >
             <li
-              class="ais-HierarchicalMenu-item ais-HierarchicalMenu-item--parent ais-HierarchicalMenu-item--selected"
+              class="ais-HierarchicalMenu-item ais-HierarchicalMenu-item--selected ais-HierarchicalMenu-item--parent"
             >
               <a
                 class="ais-HierarchicalMenu-link ais-HierarchicalMenu-link--selected"
@@ -210,7 +210,7 @@ describe('HierarchicalMenu', () => {
               class="ais-HierarchicalMenu-list"
             >
               <li
-                class="ais-HierarchicalMenu-item ais-HierarchicalMenu-item--parent ais-HierarchicalMenu-item--selected"
+                class="ais-HierarchicalMenu-item ais-HierarchicalMenu-item--selected ais-HierarchicalMenu-item--parent"
               >
                 <a
                   class="ais-HierarchicalMenu-link ais-HierarchicalMenu-link--selected"
@@ -310,6 +310,7 @@ describe('HierarchicalMenu', () => {
               </li>
             </ul>
             <button
+              aria-expanded="false"
               class="ais-HierarchicalMenu-showMore"
             >
               Show more
@@ -367,7 +368,7 @@ describe('HierarchicalMenu', () => {
             class="ais-HierarchicalMenu-list LIST"
           >
             <li
-              class="ais-HierarchicalMenu-item ITEM ais-HierarchicalMenu-item--parent PARENTITEM ais-HierarchicalMenu-item--selected SELECTEDITEM"
+              class="ais-HierarchicalMenu-item ITEM ais-HierarchicalMenu-item--selected SELECTEDITEM ais-HierarchicalMenu-item--parent PARENTITEM"
             >
               <a
                 class="ais-HierarchicalMenu-link LINK ais-HierarchicalMenu-link--selected SELECTEDITEMLINK"
@@ -467,6 +468,7 @@ describe('HierarchicalMenu', () => {
             </li>
           </ul>
           <button
+            aria-expanded="false"
             class="ais-HierarchicalMenu-showMore SHOWMORE ais-HierarchicalMenu-showMore--disabled DISABLEDSHOWMORE"
             disabled=""
           >

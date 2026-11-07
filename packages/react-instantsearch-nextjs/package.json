@@ -1,8 +1,7 @@
 {
   "name": "react-instantsearch-nextjs",
-  "version": "0.1.4",
+  "version": "1.4.15",
   "description": "React InstantSearch SSR utilities for Next.js",
-  "source": "src/index.ts",
   "types": "dist/es/index.d.ts",
   "main": "dist/cjs/index.js",
   "module": "dist/es/index.js",
@@ -41,19 +40,26 @@
   ],
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "yarn build:cjs && yarn build:es && yarn build:types",
-    "build:cjs": "BABEL_ENV=cjs babel src --root-mode upward --extensions '.js,.ts,.tsx' --out-dir dist/cjs --ignore '**/__tests__/**/*','**/__mocks__/**/*' --quiet && ../../scripts/prepare-cjs.sh",
-    "build:es": "BABEL_ENV=es babel src --root-mode upward --extensions '.js,.ts,.tsx' --out-dir dist/es --ignore '**/__tests__/**/*','**/__mocks__/**/*' --quiet",
+    "build": "BABEL_ENV=es,rollup BUILD_FORMAT=esm rollup -c rollup.config.mjs && BABEL_ENV=rollup BUILD_FORMAT=cjs rollup -c rollup.config.mjs && yarn build:types",
     "build:types": "tsc -p ./tsconfig.declaration.json --outDir ./dist/es",
-    "test:exports": "node ./__tests__/module/is-es-module.mjs && node ./__tests__/module/is-cjs-module.cjs"
+    "test:e2e": "playwright test",
+    "test:e2e:saucelabs": "playwright test",
+    "test:exports": "node ./__tests__/module/is-es-module.mjs && node ./__tests__/module/is-cjs-module.cjs",
+    "watch:es": "rollup -c rollup.config.mjs --watch"
+  },
+  "dependencies": {
+    "@swc/helpers": "0.5.18"
   },
   "devDependencies": {
-    "instantsearch.js": "4.60.0",
-    "next": "13.5.1",
-    "react-instantsearch-core": "7.3.0"
+    "@playwright/test": "1.49.1",
+    "instantsearch.js": "4.122.0",
+    "next": "16.0.7",
+    "react-instantsearch-core": "7.54.0",
+    "start-server-and-test": "1.15.3",
+    "ts-node": "8.4.1"
   },
   "peerDependencies": {
-    "next": ">= 13.4 && < 14",
-    "react-instantsearch": ">= 7.1.0 && < 8"
+    "next": ">= 13.4 < 17",
+    "react-instantsearch": ">= 7.1.0 < 8"
   }
 }

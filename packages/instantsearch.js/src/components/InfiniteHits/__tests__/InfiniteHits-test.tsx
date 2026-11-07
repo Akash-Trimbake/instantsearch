@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 /** @jsx h */
 
@@ -28,6 +28,9 @@ describe('InfiniteHits', () => {
     disabledLoadPrevious: 'disabledLoadPrevious',
     loadMore: 'loadMore',
     disabledLoadMore: 'disabledLoadMore',
+    bannerRoot: 'bannerRoot',
+    bannerImage: 'bannerImage',
+    bannerLink: 'bannerLink',
   };
 
   const sendEvent = () => {};

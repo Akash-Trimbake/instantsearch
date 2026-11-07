@@ -1,3 +1,7 @@
+/**
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
+ */
+
 import {
   createSearchClient,
   createSingleSearchResponse,
@@ -7,6 +11,7 @@ import algoliasearchHelper, {
   SearchParameters,
 } from 'algoliasearch-helper';
 
+import { createInstantSearch } from '../../../../test/createInstantSearch';
 import {
   createDisposeOptions,
   createInitOptions,
@@ -486,7 +491,9 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/search-box/
 
       const renderState = searchBox.getRenderState(
         {},
-        createRenderOptions({ searchMetadata: { isSearchStalled: true } })
+        createRenderOptions({
+          instantSearchInstance: createInstantSearch({ status: 'stalled' }),
+        })
       );
 
       expect(renderState.searchBox).toEqual({
@@ -573,7 +580,9 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/search-box/
       searchBox.init!(createInitOptions());
 
       const renderState = searchBox.getWidgetRenderState(
-        createRenderOptions({ searchMetadata: { isSearchStalled: true } })
+        createRenderOptions({
+          instantSearchInstance: createInstantSearch({ status: 'stalled' }),
+        })
       );
 
       expect(renderState).toEqual({

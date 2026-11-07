@@ -6,7 +6,7 @@ var fv = require('../functions/escapeFacetValue');
 var find = require('../functions/find');
 var findIndex = require('../functions/findIndex');
 var formatSort = require('../functions/formatSort');
-var merge = require('../functions/merge');
+var mergeNumericMax = require('../functions/mergeNumericMax');
 var orderBy = require('../functions/orderBy');
 var escapeFacetValue = fv.escapeFacetValue;
 var unescapeFacetValue = fv.unescapeFacetValue;
@@ -99,7 +99,6 @@ function findMatchingHierarchicalFacetFromAttributeName(
   );
 }
 
-// eslint-disable-next-line valid-jsdoc
 /**
  * Constructor for SearchResults
  * @class
@@ -107,6 +106,7 @@ function findMatchingHierarchicalFacetFromAttributeName(
  * {@link AlgoliaSearchHelper}.
  * @param {SearchParameters} state state that led to the response
  * @param {array.<object>} results the results from algolia client
+ * @param {object} options options to control results content
  * @example <caption>SearchResults of the first query in
  * <a href="http://demos.algolia.com/instant-search-demo">the instant search demo</a></caption>
 {
@@ -231,7 +231,7 @@ function findMatchingHierarchicalFacetFromAttributeName(
 }
  **/
 function SearchResults(state, results, options) {
-  var mainSubResponse = results[0];
+  var mainSubResponse = results[0] || {};
 
   this._rawResults = results;
 
@@ -244,8 +244,11 @@ function SearchResults(state, results, options) {
   });
 
   // Make every key of the result options reachable from the instance
-  Object.keys(options || {}).forEach(function (key) {
-    self[key] = options[key];
+  var opts = defaultsPure(options, {
+    persistHierarchicalRootCount: false,
+  });
+  Object.keys(opts).forEach(function (key) {
+    self[key] = opts[key];
   });
 
   /**
@@ -510,11 +513,16 @@ function SearchResults(state, results, options) {
           return;
         }
 
-        self.hierarchicalFacets[position][attributeIndex].data = merge(
-          {},
-          self.hierarchicalFacets[position][attributeIndex].data,
-          facetResults
-        );
+        self.hierarchicalFacets[position][attributeIndex].data =
+          self.persistHierarchicalRootCount
+            ? mergeNumericMax(
+                self.hierarchicalFacets[position][attributeIndex].data,
+                facetResults
+              )
+            : defaultsPure(
+                facetResults,
+                self.hierarchicalFacets[position][attributeIndex].data
+              );
       } else {
         position = disjunctiveFacetsIndices[dfacet];
 
@@ -523,7 +531,7 @@ function SearchResults(state, results, options) {
 
         self.disjunctiveFacets[position] = {
           name: dfacet,
-          data: defaultsPure({}, facetResults, dataFromMainRequest),
+          data: mergeNumericMax(dataFromMainRequest, facetResults),
           exhaustive: result.exhaustiveFacetsCount,
         };
         assignFacetStats(
@@ -533,19 +541,19 @@ function SearchResults(state, results, options) {
         );
 
         if (state.disjunctiveFacetsRefinements[dfacet]) {
-          state.disjunctiveFacetsRefinements[dfacet].forEach(function (
-            refinementValue
-          ) {
-            // add the disjunctive refinements if it is no more retrieved
-            if (
-              !self.disjunctiveFacets[position].data[refinementValue] &&
-              state.disjunctiveFacetsRefinements[dfacet].indexOf(
-                unescapeFacetValue(refinementValue)
-              ) > -1
-            ) {
-              self.disjunctiveFacets[position].data[refinementValue] = 0;
+          state.disjunctiveFacetsRefinements[dfacet].forEach(
+            function (refinementValue) {
+              // add the disjunctive refinements if it is no more retrieved
+              if (
+                !self.disjunctiveFacets[position].data[refinementValue] &&
+                state.disjunctiveFacetsRefinements[dfacet].indexOf(
+                  unescapeFacetValue(refinementValue)
+                ) > -1
+              ) {
+                self.disjunctiveFacets[position].data[refinementValue] = 0;
+              }
             }
-          });
+          );
         }
       }
     });
@@ -595,9 +603,13 @@ function SearchResults(state, results, options) {
         // We want
         //   | beers (5)
         //     > IPA (5)
+        // @MAJOR: remove this legacy behaviour in next major version
         var defaultData = {};
 
-        if (currentRefinement.length > 0) {
+        if (
+          currentRefinement.length > 0 &&
+          !self.persistHierarchicalRootCount
+        ) {
           var root = currentRefinement[0].split(separator)[0];
           defaultData[root] =
             self.hierarchicalFacets[position][attributeIndex].data[root];
@@ -745,7 +757,8 @@ function extractNormalizedFacetValues(results, attribute) {
  * @return {undefined} function mutates the item
  */
 function setIsRefined(item, currentRefinement, depth) {
-  item.isRefined = item.name === currentRefinement[depth];
+  item.isRefined =
+    item.name === (currentRefinement[depth] && currentRefinement[depth].trim());
   if (item.data) {
     item.data.forEach(function (child) {
       setIsRefined(child, currentRefinement, depth + 1);
@@ -803,8 +816,9 @@ function vanillaSortFn(order, data) {
 function sortViaFacetOrdering(facetValues, facetOrdering) {
   var orderedFacets = [];
   var remainingFacets = [];
-
+  var hide = facetOrdering.hide || [];
   var order = facetOrdering.order || [];
+
   /**
    * an object with the keys being the values in order, the values their index:
    * ['one', 'two'] -> { one: 0, two: 1 }
@@ -817,9 +831,10 @@ function sortViaFacetOrdering(facetValues, facetOrdering) {
   facetValues.forEach(function (item) {
     // hierarchical facets get sorted using their raw name
     var name = item.path || item.name;
-    if (reverseOrder[name] !== undefined) {
+    var hidden = hide.indexOf(name) > -1;
+    if (!hidden && reverseOrder[name] !== undefined) {
       orderedFacets[reverseOrder[name]] = item;
-    } else {
+    } else if (!hidden) {
       remainingFacets.push(item);
     }
   });
@@ -914,7 +929,7 @@ SearchResults.prototype.getFacetValues = function (attribute, opts) {
     return undefined;
   }
 
-  var options = defaultsPure({}, opts, {
+  var options = defaultsPure(opts, {
     sortBy: SearchResults.DEFAULT_SORT,
     // if no sortBy is given, attempt to sort based on facetOrdering
     // if it is given, we still allow to sort via facet ordering first
@@ -933,8 +948,8 @@ SearchResults.prototype.getFacetValues = function (attribute, opts) {
 
   return recSort(
     function (data, facetName) {
+      var facetOrdering = getFacetOrdering(results, facetName);
       if (options.facetOrdering) {
-        var facetOrdering = getFacetOrdering(results, facetName);
         if (facetOrdering) {
           return sortViaFacetOrdering(data, facetOrdering);
         }
@@ -942,7 +957,24 @@ SearchResults.prototype.getFacetValues = function (attribute, opts) {
 
       if (Array.isArray(options.sortBy)) {
         var order = formatSort(options.sortBy, SearchResults.DEFAULT_SORT);
-        return orderBy(data, order[0], order[1]);
+        var items = orderBy(data, order[0], order[1]);
+
+        var hide =
+          facetOrdering && facetOrdering.hide ? facetOrdering.hide : [];
+        if (hide.length > 0) {
+          var visible = [];
+          items.forEach(function (item) {
+            // hierarchical facets get sorted using their raw name
+            var name = item.path || item.name;
+            if (hide.indexOf(name) === -1) {
+              visible.push(item);
+            }
+          });
+
+          return visible;
+        }
+
+        return items;
       } else if (typeof options.sortBy === 'function') {
         return vanillaSortFn(options.sortBy, data);
       }
@@ -1023,36 +1055,40 @@ SearchResults.prototype.getRefinements = function () {
     });
   });
 
-  Object.keys(state.disjunctiveFacetsRefinements).forEach(function (
-    attributeName
-  ) {
-    state.disjunctiveFacetsRefinements[attributeName].forEach(function (name) {
-      res.push(
-        getRefinement(
-          state,
-          'disjunctive',
-          attributeName,
-          name,
-          results.disjunctiveFacets
-        )
+  Object.keys(state.disjunctiveFacetsRefinements).forEach(
+    function (attributeName) {
+      state.disjunctiveFacetsRefinements[attributeName].forEach(
+        function (name) {
+          res.push(
+            getRefinement(
+              state,
+              'disjunctive',
+              attributeName,
+              name,
+              results.disjunctiveFacets
+            )
+          );
+        }
       );
-    });
-  });
+    }
+  );
 
-  Object.keys(state.hierarchicalFacetsRefinements).forEach(function (
-    attributeName
-  ) {
-    state.hierarchicalFacetsRefinements[attributeName].forEach(function (name) {
-      res.push(
-        getHierarchicalRefinement(
-          state,
-          attributeName,
-          name,
-          results.hierarchicalFacets
-        )
+  Object.keys(state.hierarchicalFacetsRefinements).forEach(
+    function (attributeName) {
+      state.hierarchicalFacetsRefinements[attributeName].forEach(
+        function (name) {
+          res.push(
+            getHierarchicalRefinement(
+              state,
+              attributeName,
+              name,
+              results.hierarchicalFacets
+            )
+          );
+        }
       );
-    });
-  });
+    }
+  );
 
   Object.keys(state.numericRefinements).forEach(function (attributeName) {
     var operators = state.numericRefinements[attributeName];

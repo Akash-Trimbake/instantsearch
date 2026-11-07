@@ -1,10 +1,11 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 import { runTestSuites } from '@instantsearch/tests/common';
 import * as testSuites from '@instantsearch/tests/widgets';
+import { connectCompare } from 'instantsearch.js/es/connectors/index';
 
-import { nextTick, mountApp } from '../../test/utils';
+import { nextTick, mountApp, mountAppOrThrow } from '../../test/utils';
 import {
   AisInstantSearch,
   AisRefinementList,
@@ -23,6 +24,22 @@ import {
   AisCurrentRefinements,
   AisToggleRefinement,
   AisSortBy,
+  AisStats,
+  AisRatingMenu,
+  AisNumericMenu,
+  AisPoweredBy,
+  AisMenuSelect,
+  AisDynamicWidgets,
+  AisRelatedProducts,
+  AisExperimentalAutocomplete,
+  AisFrequentlyBoughtTogether,
+  AisLookingSimilar,
+  AisTrendingItems,
+  AisTrendingFacets,
+  AisChat,
+  AisChatTrigger,
+  AisCompareBar,
+  AisResultCard,
 } from '../instantsearch';
 import { renderCompat } from '../util/vue-compat';
 
@@ -82,7 +99,7 @@ const testSetups = {
   async createBreadcrumbWidgetTests({ instantSearchOptions, widgetParams }) {
     // The passed `transformItems` prop is meant to apply only to the breadcrumb,
     // not the hierarchical menu
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    // eslint-disable-next-line no-unused-vars
     const { transformItems, ...hierarchicalWidgetParams } = widgetParams;
 
     mountApp(
@@ -171,6 +188,9 @@ const testSetups = {
                   ),
               },
             }),
+            h('div', { attrs: { id: 'hits-with-defaults' } }, [
+              h(AisInfiniteHits, { props: widgetParams }),
+            ]),
             h(AisIndex, { props: { indexName: 'nested' } }, [
               h(AisInfiniteHits, {
                 attrs: { id: 'nested-hits' },
@@ -304,6 +324,9 @@ const testSetups = {
 
     await nextTick();
   },
+  createRangeSliderWidgetTests() {
+    throw new Error('RangeSlider is not supported in Vue InstantSearch');
+  },
   createInstantSearchWidgetTests({ instantSearchOptions }) {
     mountApp(
       {
@@ -404,6 +427,36 @@ const testSetups = {
 
     await nextTick();
   },
+  async createRatingMenuWidgetTests({ instantSearchOptions, widgetParams }) {
+    mountApp(
+      {
+        render: renderCompat((h) =>
+          h(AisInstantSearch, { props: instantSearchOptions }, [
+            h(AisRatingMenu, { props: widgetParams }),
+            h(GlobalErrorSwallower),
+          ])
+        ),
+      },
+      document.body.appendChild(document.createElement('div'))
+    );
+
+    await nextTick();
+  },
+  async createNumericMenuWidgetTests({ instantSearchOptions, widgetParams }) {
+    mountApp(
+      {
+        render: renderCompat((h) =>
+          h(AisInstantSearch, { props: instantSearchOptions }, [
+            h(AisNumericMenu, { props: widgetParams }),
+            h(GlobalErrorSwallower),
+          ])
+        ),
+      },
+      document.body.appendChild(document.createElement('div'))
+    );
+
+    await nextTick();
+  },
   async createToggleRefinementWidgetTests({
     instantSearchOptions,
     widgetParams,
@@ -452,10 +505,330 @@ const testSetups = {
 
     await nextTick();
   },
+  async createStatsWidgetTests({ instantSearchOptions, widgetParams }) {
+    mountApp(
+      {
+        render: renderCompat((h) =>
+          h('div', {}, [
+            h(AisInstantSearch, { props: instantSearchOptions }, [
+              h(AisSearchBox),
+              h(AisStats, { props: widgetParams }),
+              h(GlobalErrorSwallower),
+            ]),
+          ])
+        ),
+      },
+      document.body.appendChild(document.createElement('div'))
+    );
+
+    await nextTick();
+  },
+  async createRelatedProductsWidgetTests({
+    instantSearchOptions,
+    widgetParams,
+  }) {
+    mountApp(
+      {
+        render: renderCompat((h) =>
+          h(AisInstantSearch, { props: instantSearchOptions }, [
+            h(AisRelatedProducts, { props: widgetParams }),
+            h(GlobalErrorSwallower),
+          ])
+        ),
+      },
+      document.body.appendChild(document.createElement('div'))
+    );
+
+    await nextTick();
+  },
+  async createFrequentlyBoughtTogetherWidgetTests({
+    instantSearchOptions,
+    widgetParams,
+  }) {
+    mountApp(
+      {
+        render: renderCompat((h) =>
+          h(AisInstantSearch, { props: instantSearchOptions }, [
+            h(AisFrequentlyBoughtTogether, { props: widgetParams }),
+            h(GlobalErrorSwallower),
+          ])
+        ),
+      },
+      document.body.appendChild(document.createElement('div'))
+    );
+
+    await nextTick();
+  },
+  async createTrendingItemsWidgetTests({ instantSearchOptions, widgetParams }) {
+    mountApp(
+      {
+        render: renderCompat((h) =>
+          h(AisInstantSearch, { props: instantSearchOptions }, [
+            h(AisTrendingItems, { props: widgetParams }),
+            h(GlobalErrorSwallower),
+          ])
+        ),
+      },
+      document.body.appendChild(document.createElement('div'))
+    );
+
+    await nextTick();
+  },
+  async createTrendingFacetsWidgetTests({
+    instantSearchOptions,
+    widgetParams,
+  }) {
+    mountApp(
+      {
+        render: renderCompat((h) =>
+          h(AisInstantSearch, { props: instantSearchOptions }, [
+            h(AisTrendingFacets, { props: widgetParams }),
+            h(GlobalErrorSwallower),
+          ])
+        ),
+      },
+      document.body.appendChild(document.createElement('div'))
+    );
+
+    await nextTick();
+  },
+  async createLookingSimilarWidgetTests({
+    instantSearchOptions,
+    widgetParams,
+  }) {
+    mountApp(
+      {
+        render: renderCompat((h) =>
+          h(AisInstantSearch, { props: instantSearchOptions }, [
+            h(AisLookingSimilar, { props: widgetParams }),
+            h(GlobalErrorSwallower),
+          ])
+        ),
+      },
+      document.body.appendChild(document.createElement('div'))
+    );
+
+    await nextTick();
+  },
+  createPoweredByWidgetTests({ instantSearchOptions, widgetParams }) {
+    mountApp(
+      {
+        render: renderCompat((h) =>
+          h(AisInstantSearch, { props: instantSearchOptions }, [
+            h(AisPoweredBy, { props: widgetParams }),
+            h(GlobalErrorSwallower),
+          ])
+        ),
+      },
+      document.body.appendChild(document.createElement('div'))
+    );
+
+    return {
+      flavor: 'vue-instantsearch',
+    };
+  },
+  async createMenuSelectWidgetTests({ instantSearchOptions, widgetParams }) {
+    mountApp(
+      {
+        render: renderCompat((h) =>
+          h(AisInstantSearch, { props: instantSearchOptions }, [
+            h(AisMenuSelect, { props: widgetParams }),
+            h(GlobalErrorSwallower),
+          ])
+        ),
+      },
+      document.body.appendChild(document.createElement('div'))
+    );
+
+    await nextTick();
+  },
+  createDynamicWidgetsWidgetTests({ instantSearchOptions, widgetParams }) {
+    mountApp(
+      {
+        render: renderCompat((h) =>
+          h(AisInstantSearch, { props: instantSearchOptions }, [
+            h(
+              AisDynamicWidgets,
+              { props: widgetParams },
+              h(AisRefinementList, { props: { attribute: 'brand' } }),
+              h(AisMenu, { props: { attribute: 'category' } }),
+              h(AisHierarchicalMenu, {
+                props: {
+                  attributes: [
+                    'hierarchicalCategories.lvl0',
+                    'hierarchicalCategories.lvl1',
+                  ],
+                },
+              })
+            ),
+            h(GlobalErrorSwallower),
+          ])
+        ),
+      },
+      document.body.appendChild(document.createElement('div'))
+    );
+  },
+  async createChatWidgetTests({ instantSearchOptions, widgetParams }) {
+    const {
+      renderChat = true,
+      renderRefinements,
+      ...chatWidgetParams
+    } = widgetParams;
+
+    mountApp(
+      {
+        render: renderCompat((h) =>
+          h(AisInstantSearch, { props: instantSearchOptions }, [
+            renderRefinements && h(AisSearchBox, { key: 'searchbox' }),
+            renderRefinements &&
+              h(AisRefinementList, {
+                key: 'brand',
+                props: { attribute: 'brand' },
+              }),
+            renderRefinements &&
+              h(AisRefinementList, {
+                key: 'category',
+                props: { attribute: 'category' },
+              }),
+            renderRefinements &&
+              h(AisHierarchicalMenu, {
+                key: 'hierarchy',
+                props: {
+                  attributes: [
+                    'hierarchicalCategories.lvl0',
+                    'hierarchicalCategories.lvl1',
+                    'hierarchicalCategories.lvl2',
+                  ],
+                },
+              }),
+            h(AisChatTrigger, { key: 'trigger' }),
+            renderChat && h(AisChat, { key: 'chat', props: chatWidgetParams }),
+            h(GlobalErrorSwallower, { key: 'errors' }),
+          ])
+        ),
+      },
+      document.body.appendChild(document.createElement('div'))
+    );
+
+    await nextTick();
+  },
+  async createAutocompleteWidgetTests({ instantSearchOptions, widgetParams }) {
+    const { slots = {}, ...props } = widgetParams;
+
+    mountApp(
+      {
+        render: renderCompat((h) =>
+          h(AisInstantSearch, { props: instantSearchOptions }, [
+            h(AisExperimentalAutocomplete, {
+              props,
+              scopedSlots: slots,
+            }),
+            h(GlobalErrorSwallower),
+          ])
+        ),
+      },
+      document.body.appendChild(document.createElement('div'))
+    );
+
+    await nextTick();
+  },
+  createFilterSuggestionsWidgetTests() {
+    throw new Error('FilterSuggestions is not supported in Vue InstantSearch');
+  },
+  createPromptSuggestionsWidgetTests() {
+    throw new Error('PromptSuggestions is not supported in Vue InstantSearch');
+  },
+  async createCompareBarWidgetTests({ instantSearchOptions, widgetParams }) {
+    // The bar hands the comparison to an `ais-chat` on the same index, so the
+    // default setup mounts both. A sibling `compare` widget renders a toggle
+    // per product, the way a per-hit "Compare" button would.
+    const {
+      renderChat = true,
+      products = [],
+      slots = {},
+      ...props
+    } = widgetParams;
+
+    const CompareToggles = {
+      mixins: [createWidgetMixin({ connector: connectCompare })],
+      computed: {
+        widgetParams() {
+          return { configurationId: props.configurationId };
+        },
+      },
+      render: renderCompat(function (h) {
+        return h(
+          'div',
+          {},
+          products.map((product) =>
+            h('button', {
+              key: product.objectID,
+              attrs: {
+                'data-testid': `CompareToggle-${product.objectID}`,
+                'aria-pressed': String(
+                  Boolean(this.state && this.state.isSelected(product.objectID))
+                ),
+              },
+              on: { click: () => this.state.toggleItem(product) },
+            })
+          )
+        );
+      }),
+    };
+
+    mountApp(
+      {
+        render: renderCompat((h) =>
+          h(AisInstantSearch, { props: instantSearchOptions }, [
+            h(CompareToggles),
+            h(AisCompareBar, { props, scopedSlots: slots }),
+            // A dedicated id: the `agentId` the chat suites use keys persisted
+            // messages in `sessionStorage` that leak across tests in this file.
+            renderChat &&
+              h(AisChat, { props: { agentId: 'compareBarChatAgentId' } }),
+            h(GlobalErrorSwallower),
+          ])
+        ),
+      },
+      document.body.appendChild(document.createElement('div'))
+    );
+
+    await nextTick();
+  },
+  async createResultCardWidgetTests({ instantSearchOptions, widgetParams }) {
+    // "Continue in chat" needs an `ais-chat` with the card's `agentId` on the
+    // same index, so the default setup mounts both. `renderChat: false` is how
+    // a test asks for the unconfigured page.
+    const { renderChat = true, slots = {}, ...props } = widgetParams;
+
+    mountAppOrThrow(
+      {
+        render: renderCompat((h) =>
+          h(AisInstantSearch, { props: instantSearchOptions }, [
+            h(AisResultCard, { props, scopedSlots: slots }),
+            renderChat && h(AisChat, { props: { agentId: props.agentId } }),
+            h(GlobalErrorSwallower),
+          ])
+        ),
+      },
+      document.body.appendChild(document.createElement('div'))
+    );
+
+    await nextTick();
+  },
 };
 
 const testOptions = {
-  createRefinementListWidgetTests: undefined,
+  createRefinementListWidgetTests: {
+    skippedTests: {
+      'selects first item on submitting the search (with searchableSelectOnSubmit: true)': true,
+      // Vue does not have the JS flavor's `componentDidUpdate` focus
+      // restoration; Vue 3 resets `activeElement` to body across re-renders,
+      // so the focus assertion is unreliable there. The bug this test
+      // catches is in the Preact RefinementList component.
+      'keeps focus on toggled input between re-renders (multiple values that should be escaped)': true,
+    },
+  },
   createHierarchicalMenuWidgetTests: undefined,
   createBreadcrumbWidgetTests: undefined,
   createMenuWidgetTests: undefined,
@@ -463,6 +836,10 @@ const testOptions = {
   createInfiniteHitsWidgetTests: undefined,
   createHitsWidgetTests: undefined,
   createRangeInputWidgetTests: undefined,
+  createRangeSliderWidgetTests: {
+    skippedTests: { 'RangeSlider widget common tests': true },
+  },
+  createRatingMenuWidgetTests: undefined,
   createInstantSearchWidgetTests: undefined,
   createHitsPerPageWidgetTests: undefined,
   createClearRefinementsWidgetTests: undefined,
@@ -472,10 +849,50 @@ const testOptions = {
     skippedTests: { 'searchAsYouType option': true },
   },
   createSortByWidgetTests: undefined,
+  createStatsWidgetTests: undefined,
+  createRelatedProductsWidgetTests: undefined,
+  createFrequentlyBoughtTogetherWidgetTests: undefined,
+  createTrendingItemsWidgetTests: undefined,
+  createTrendingFacetsWidgetTests: undefined,
+  createLookingSimilarWidgetTests: undefined,
+  createPoweredByWidgetTests: undefined,
+  createDynamicWidgetsWidgetTests: undefined,
+  createChatWidgetTests: {
+    // Vue batches DOM updates, so flush them after each step the shared tests
+    // wrap in `act`.
+    act: async (callback) => {
+      await callback();
+      await nextTick();
+    },
+  },
+  createAutocompleteWidgetTests: undefined,
+  createFilterSuggestionsWidgetTests: {
+    skippedTests: { 'FilterSuggestions widget common tests': true },
+  },
+  createPromptSuggestionsWidgetTests: {
+    skippedTests: { 'PromptSuggestions widget common tests': true },
+  },
+  createResultCardWidgetTests: {
+    // Vue batches DOM updates, so flush them after each step the shared tests
+    // wrap in `act`.
+    act: async (callback) => {
+      await callback();
+      await nextTick();
+    },
+  },
+  createCompareBarWidgetTests: {
+    // Vue batches DOM updates, so flush them after each step the shared tests
+    // wrap in `act`.
+    act: async (callback) => {
+      await callback();
+      await nextTick();
+    },
+  },
 };
 
 describe('Common widget tests (Vue InstantSearch)', () => {
   runTestSuites({
+    flavor: 'vue',
     testSuites,
     testSetups,
     testOptions,

@@ -1,4 +1,4 @@
-import algoliasearch from 'algoliasearch/lite';
+import { liteClient as algoliasearch } from 'algoliasearch/lite';
 import React, { useRef } from 'react';
 import {
   Configure,
@@ -30,6 +30,9 @@ import {
 import { ScrollTo } from './components/ScrollTo';
 import getRouting from './routing';
 import { formatNumber } from './utils';
+
+import 'instantsearch.css/themes/reset.css';
+
 import './Theme.css';
 import './App.css';
 import './components/Pagination.css';

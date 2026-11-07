@@ -1,10 +1,11 @@
 /** @jsx h */
 
-import { cx } from '@algolia/ui-components-shared';
+import { cx } from 'instantsearch-ui-components';
 import { h, render } from 'preact';
 
 import SearchBox from '../../components/SearchBox/SearchBox';
 import connectSearchBox from '../../connectors/search-box/connectSearchBox';
+import { isChatBusy, openChat } from '../../lib/chat';
 import { component } from '../../lib/suit';
 import {
   getContainerNode,
@@ -17,6 +18,7 @@ import type {
   SearchBoxComponentCSSClasses,
   SearchBoxComponentTemplates,
 } from '../../components/SearchBox/SearchBox';
+import type { ChatRenderState } from '../../connectors/chat/connectChat';
 import type {
   SearchBoxConnectorParams,
   SearchBoxRenderState,
@@ -26,6 +28,7 @@ import type { WidgetFactory, Template, RendererOptions } from '../../types';
 
 const withUsage = createDocumentationMessageGenerator({ name: 'search-box' });
 const suit = component('SearchBox');
+const aiModeSuit = component('AiModeButton');
 
 export type SearchBoxTemplates = Partial<{
   /**
@@ -40,6 +43,11 @@ export type SearchBoxTemplates = Partial<{
    * Template used for displaying the loading indicator. Can accept a function or a Hogan string.
    */
   loadingIndicator: Template<{ cssClasses: SearchBoxComponentCSSClasses }>;
+  /**
+   * Template used for displaying the AI mode button content (icon and label).
+   * Can accept a function or a Hogan string.
+   */
+  aiMode: Template<{ cssClasses: SearchBoxComponentCSSClasses }>;
 }>;
 
 export type SearchBoxCSSClasses = Partial<{
@@ -79,6 +87,18 @@ export type SearchBoxCSSClasses = Partial<{
    * CSS classes added to the loading indicator icon.
    */
   loadingIcon: string | string[];
+  /**
+   * CSS classes added to the AI mode button.
+   */
+  aiModeButton: string | string[];
+  /**
+   * CSS classes added to the AI mode button icon.
+   */
+  aiModeIcon: string | string[];
+  /**
+   * CSS classes added to the AI mode button label.
+   */
+  aiModeLabel: string | string[];
 }>;
 
 export type SearchBoxWidgetParams = {
@@ -100,6 +120,12 @@ export type SearchBoxWidgetParams = {
    */
   searchAsYouType?: boolean;
   /**
+   * Whether to update the search state in the middle of a
+   * composition session.
+   * @default false
+   */
+  ignoreCompositionEvents?: boolean;
+  /**
    * Whether to show the reset button
    */
   showReset?: boolean;
@@ -116,6 +142,16 @@ export type SearchBoxWidgetParams = {
    * CSS classes to add
    */
   cssClasses?: SearchBoxCSSClasses;
+  /**
+   * The accessible name and tooltip (`title`) of the submit button.
+   * @default 'Submit the search query'
+   */
+  submitTitle?: string;
+  /**
+   * The accessible name and tooltip (`title`) of the reset button.
+   * @default 'Clear the search query'
+   */
+  resetTitle?: string;
 
   /**
    * Templates used for customizing the rendering of the searchbox
@@ -127,6 +163,12 @@ export type SearchBoxWidgetParams = {
    * This `queryHook` can be used to debounce the number of searches done from the search box.
    */
   queryHook?: (query: string, hook: (value: string) => void) => void;
+  /**
+   * When true, renders an AI mode button inside the search box
+   * that opens the Chat widget and sends the current query.
+   * Requires a Chat widget on the same index.
+   */
+  aiMode?: boolean;
 };
 
 const renderer =
@@ -137,9 +179,13 @@ const renderer =
     templates,
     autofocus,
     searchAsYouType,
+    ignoreCompositionEvents,
     showReset,
     showSubmit,
     showLoadingIndicator,
+    submitTitle,
+    resetTitle,
+    aiMode,
   }: {
     containerNode: HTMLElement;
     cssClasses: SearchBoxComponentCSSClasses;
@@ -147,15 +193,44 @@ const renderer =
     templates: SearchBoxComponentTemplates;
     autofocus: boolean;
     searchAsYouType: boolean;
+    ignoreCompositionEvents: boolean;
     showReset: boolean;
     showSubmit: boolean;
     showLoadingIndicator: boolean;
+    submitTitle: string;
+    resetTitle: string;
+    aiMode?: boolean;
   }) =>
   ({
     refine,
     query,
     isSearchStalled,
+    instantSearchInstance,
   }: SearchBoxRenderState & RendererOptions<SearchBoxConnectorParams>) => {
+    const getChatRenderState = () => {
+      const indexId = instantSearchInstance.mainIndex.getIndexId();
+      return instantSearchInstance.renderState[indexId]?.chat as
+        | Partial<ChatRenderState>
+        | undefined;
+    };
+
+    const onAiModeClick = aiMode
+      ? (currentQuery: string) => {
+          if (
+            openChat(getChatRenderState(), {
+              message: currentQuery,
+              referer: 'ai-mode',
+            })
+          ) {
+            refine('');
+          }
+        }
+      : undefined;
+
+    const aiModeButtonDisabled = aiMode
+      ? isChatBusy(getChatRenderState())
+      : undefined;
+
     render(
       <SearchBox
         query={query}
@@ -163,12 +238,17 @@ const renderer =
         autofocus={autofocus}
         refine={refine}
         searchAsYouType={searchAsYouType}
+        ignoreCompositionEvents={ignoreCompositionEvents}
         templates={templates}
         showSubmit={showSubmit}
         showReset={showReset}
         showLoadingIndicator={showLoadingIndicator}
+        submitTitle={submitTitle}
+        resetTitle={resetTitle}
         isSearchStalled={isSearchStalled}
         cssClasses={cssClasses}
+        onAiModeClick={onAiModeClick}
+        aiModeButtonDisabled={aiModeButtonDisabled}
       />,
       containerNode
     );
@@ -195,11 +275,15 @@ const searchBox: SearchBoxWidget = function searchBox(widgetParams) {
     cssClasses: userCssClasses = {},
     autofocus = false,
     searchAsYouType = true,
+    ignoreCompositionEvents = false,
     showReset = true,
     showSubmit = true,
     showLoadingIndicator = true,
+    submitTitle = 'Submit the search query',
+    resetTitle = 'Clear the search query',
     queryHook,
     templates: userTemplates = {},
+    aiMode,
   } = widgetParams || {};
   if (!container) {
     throw new Error(withUsage('The `container` option is required.'));
@@ -229,6 +313,15 @@ const searchBox: SearchBoxWidget = function searchBox(widgetParams) {
       suit({ descendantName: 'loadingIcon' }),
       userCssClasses.loadingIcon
     ),
+    aiModeButton: cx(aiModeSuit(), userCssClasses.aiModeButton),
+    aiModeIcon: cx(
+      aiModeSuit({ descendantName: 'icon' }),
+      userCssClasses.aiModeIcon
+    ),
+    aiModeLabel: cx(
+      aiModeSuit({ descendantName: 'label' }),
+      userCssClasses.aiModeLabel
+    ),
   };
   const templates = {
     ...defaultTemplates,
@@ -242,18 +335,23 @@ const searchBox: SearchBoxWidget = function searchBox(widgetParams) {
     templates,
     autofocus,
     searchAsYouType,
+    ignoreCompositionEvents,
     showReset,
     showSubmit,
     showLoadingIndicator,
+    submitTitle,
+    resetTitle,
+    aiMode,
   });
 
-  const makeWidget = connectSearchBox(specializedRenderer, () =>
-    render(null, containerNode)
-  );
+  const widgetFactory = connectSearchBox(specializedRenderer, () => {
+    render(null, containerNode);
+  });
 
   return {
-    ...makeWidget({ queryHook }),
+    ...widgetFactory({ queryHook }),
     $$widgetType: 'ais.searchBox',
+    ...(aiMode ? { opensChat: true as const } : {}),
   };
 };
 

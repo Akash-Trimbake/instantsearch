@@ -3,10 +3,11 @@ import {
   createSearchClient,
 } from '@instantsearch/mocks';
 import {
+  castToJestMock,
   normalizeSnapshot as commonNormalizeSnapshot,
   wait,
 } from '@instantsearch/testutils';
-import { screen } from '@testing-library/dom';
+import { fireEvent, screen } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
 
 import { skippableDescribe } from '../../common';
@@ -76,6 +77,7 @@ export function createOptionsTests(
               type="search"
             />
             <button
+              aria-label="Submit the search query"
               class="ais-SearchBox-submit"
               title="Submit the search query"
               type="submit"
@@ -93,6 +95,7 @@ export function createOptionsTests(
               </svg>
             </button>
             <button
+              aria-label="Clear the search query"
               class="ais-SearchBox-reset"
               hidden=""
               title="Clear the search query"
@@ -305,6 +308,75 @@ export function createOptionsTests(
 
       expect(state.indexName.query).toBe('iPhone');
       expect(screen.getByRole('searchbox')).toHaveValue('iPhone');
+    });
+
+    test('does not refine within composition session when `ignoreCompositionEvents: true`', async () => {
+      const searchClient = createSearchClient({});
+
+      await setup({
+        instantSearchOptions: {
+          indexName: 'indexName',
+          searchClient,
+        },
+        widgetParams: {
+          ignoreCompositionEvents: true,
+        },
+      });
+
+      // Typing 木 using the Wubihua input method
+      // see:
+      // - https://en.wikipedia.org/wiki/Stroke_count_method
+      // - https://developer.mozilla.org/en-US/docs/Web/API/Element/compositionend_event
+      const character = '木';
+      const strokes = ['一', '丨', '丿', '丶', character];
+
+      await act(async () => {
+        await wait(0);
+        castToJestMock(searchClient.search).mockClear();
+
+        strokes.forEach((stroke, index) => {
+          const isFirst = index === 0;
+          const isLast = index === strokes.length - 1;
+          const query = isLast ? stroke : strokes.slice(0, index + 1).join('');
+
+          if (isFirst) {
+            fireEvent.compositionStart(screen.getByRole('searchbox'));
+          }
+
+          fireEvent.compositionUpdate(screen.getByRole('searchbox'), {
+            data: query,
+          });
+
+          fireEvent.input(screen.getByRole('searchbox'), {
+            isComposing: true,
+            target: {
+              value: query,
+            },
+          });
+
+          if (isLast) {
+            fireEvent.compositionEnd(screen.getByRole('searchbox'), {
+              data: query,
+              target: {
+                value: query,
+              },
+            });
+          }
+        });
+      });
+
+      expect(screen.getByRole('searchbox')).toHaveValue(character);
+
+      expect(searchClient.search).toHaveBeenCalledTimes(1);
+      expect(searchClient.search).toHaveBeenLastCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            params: expect.objectContaining({
+              query: character,
+            }),
+          }),
+        ])
+      );
     });
 
     test('resets query when clicking on reset button', async () => {

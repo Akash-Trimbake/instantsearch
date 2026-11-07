@@ -1,6 +1,7 @@
 import { fakeAct } from '../../common';
 
 import { createInsightsTests } from './insights';
+import { createLinksTests } from './links';
 import { createOptionsTests } from './options';
 
 import type { TestOptions, TestSetup } from '../../common';
@@ -13,14 +14,15 @@ export type HitsWidgetSetup = TestSetup<{
 
 export function createHitsWidgetTests(
   setup: HitsWidgetSetup,
-  { act = fakeAct, skippedTests = {} }: TestOptions = {}
+  { act = fakeAct, skippedTests = {}, flavor = 'javascript' }: TestOptions = {}
 ) {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
 
   describe('Hits widget common tests', () => {
-    createInsightsTests(setup, { act, skippedTests });
-    createOptionsTests(setup, { act, skippedTests });
+    createInsightsTests(setup, { act, skippedTests, flavor });
+    createOptionsTests(setup, { act, skippedTests, flavor });
+    createLinksTests(setup, { act, skippedTests, flavor });
   });
 }

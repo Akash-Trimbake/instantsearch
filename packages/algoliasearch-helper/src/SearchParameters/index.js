@@ -225,6 +225,13 @@ function SearchParameters(newParameters) {
  */
 SearchParameters.PARAMETERS = Object.keys(new SearchParameters());
 
+// Returns a finite number or null. Used to reject Infinity/-Infinity from parseFloat.
+function parseFiniteFloat(value) {
+  var n = parseFloat(value);
+  // global isFinite is safe here: n is always a number type (no string coercion risk)
+  return isFinite(n) ? n : null;
+}
+
 /**
  * @private
  * @param {object} partialState full or part of a state
@@ -254,24 +261,40 @@ SearchParameters._parseNumbers = function (partialState) {
     var value = partialState[k];
     if (typeof value === 'string') {
       var parsedValue = parseFloat(value);
-      // global isNaN is ok to use here, value is only number or NaN
-      numbers[k] = isNaN(parsedValue) ? value : parsedValue;
+      if (isNaN(parsedValue)) {
+        // originally an unparseable string like "all", keep NaN
+        numbers[k] = value;
+      } else if (!isFinite(parsedValue)) {
+        // Infinity/-Infinity — convert to null
+        numbers[k] = null;
+      } else {
+        numbers[k] = parsedValue;
+      }
+    } else if (typeof value === 'number' && !isFinite(value)) {
+      // Already-numeric Infinity — convert to null
+      numbers[k] = null;
     }
   });
 
   // there's two formats of insideBoundingBox, we need to parse
   // the one which is an array of float geo rectangles
   if (Array.isArray(partialState.insideBoundingBox)) {
-    numbers.insideBoundingBox = partialState.insideBoundingBox.map(function (
-      geoRect
-    ) {
-      if (Array.isArray(geoRect)) {
-        return geoRect.map(function (value) {
-          return parseFloat(value);
-        });
+    numbers.insideBoundingBox = partialState.insideBoundingBox.map(
+      function (geoRect) {
+        if (Array.isArray(geoRect)) {
+          return geoRect.map(function (value) {
+            if (typeof value === 'string') {
+              return parseFiniteFloat(value);
+            }
+            if (typeof value === 'number' && !isFinite(value)) {
+              return null;
+            }
+            return value;
+          });
+        }
+        return geoRect;
       }
-      return geoRect;
-    });
+    );
   }
 
   if (partialState.numericRefinements) {
@@ -285,12 +308,17 @@ SearchParameters._parseNumbers = function (partialState) {
           if (Array.isArray(v)) {
             return v.map(function (vPrime) {
               if (typeof vPrime === 'string') {
-                return parseFloat(vPrime);
+                return parseFiniteFloat(vPrime);
+              }
+              if (typeof vPrime === 'number' && !isFinite(vPrime)) {
+                return null;
               }
               return vPrime;
             });
           } else if (typeof v === 'string') {
-            return parseFloat(v);
+            return parseFiniteFloat(v);
+          } else if (typeof v === 'number' && !isFinite(v)) {
+            return null;
           }
           return v;
         });
@@ -300,7 +328,7 @@ SearchParameters._parseNumbers = function (partialState) {
     numbers.numericRefinements = numericRefinements;
   }
 
-  return merge({}, partialState, numbers);
+  return merge(partialState, numbers);
 };
 
 /**
@@ -639,26 +667,24 @@ SearchParameters.prototype = {
         return this;
       }
       return this.setQueryParameters({
-        numericRefinements: this._clearNumericRefinements(function (
-          value,
-          key
-        ) {
-          return (
-            key === attribute &&
-            value.op === operator &&
-            isEqualNumericRefinement(value.val, valToNumber(paramValue))
-          );
-        }),
+        numericRefinements: this._clearNumericRefinements(
+          function (value, key) {
+            return (
+              key === attribute &&
+              value.op === operator &&
+              isEqualNumericRefinement(value.val, valToNumber(paramValue))
+            );
+          }
+        ),
       });
     } else if (operator !== undefined) {
       if (!this.isNumericRefined(attribute, operator)) return this;
       return this.setQueryParameters({
-        numericRefinements: this._clearNumericRefinements(function (
-          value,
-          key
-        ) {
-          return key === attribute && value.op === operator;
-        }),
+        numericRefinements: this._clearNumericRefinements(
+          function (value, key) {
+            return key === attribute && value.op === operator;
+          }
+        ),
       });
     }
 
@@ -1213,7 +1239,6 @@ SearchParameters.prototype = {
 
     return this.setQueryParameters({
       hierarchicalFacetsRefinements: defaultsPure(
-        {},
         mod,
         this.hierarchicalFacetsRefinements
       ),
@@ -1241,7 +1266,6 @@ SearchParameters.prototype = {
     mod[facet] = [path];
     return this.setQueryParameters({
       hierarchicalFacetsRefinements: defaultsPure(
-        {},
         mod,
         this.hierarchicalFacetsRefinements
       ),
@@ -1262,7 +1286,6 @@ SearchParameters.prototype = {
     mod[facet] = [];
     return this.setQueryParameters({
       hierarchicalFacetsRefinements: defaultsPure(
-        {},
         mod,
         this.hierarchicalFacetsRefinements
       ),
@@ -1575,8 +1598,7 @@ SearchParameters.prototype = {
       }
 
       return previous;
-    },
-    previousPlainObject);
+    }, previousPlainObject);
 
     return new this.constructor(nextPlainObject);
   },

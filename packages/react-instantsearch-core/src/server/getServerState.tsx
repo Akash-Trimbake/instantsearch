@@ -2,15 +2,18 @@ import {
   getInitialResults,
   waitForResults,
 } from 'instantsearch.js/es/lib/server';
-import { walkIndex } from 'instantsearch.js/es/lib/utils';
+import {
+  isTwoPassWidget,
+  walkIndex,
+  resetWidgetId,
+} from 'instantsearch.js/es/lib/utils';
 import React from 'react';
 
-import { InstantSearchServerContext, InstantSearchSSRProvider } from '..';
+import { InstantSearchServerContext } from '../components/InstantSearchServerContext';
+import { InstantSearchSSRProvider } from '../components/InstantSearchSSRProvider';
 
-import type {
-  InstantSearchServerContextApi,
-  InstantSearchServerState,
-} from '..';
+import type { InstantSearchServerContextApi } from '../components/InstantSearchServerContext';
+import type { InstantSearchServerState } from '../components/InstantSearchSSRProvider';
 import type { InstantSearch, UiState } from 'instantsearch.js';
 import type { ReactNode } from 'react';
 
@@ -32,6 +35,8 @@ export function getServerState(
   const searchRef: SearchRef = {
     current: undefined,
   };
+
+  resetWidgetId();
 
   const createNotifyServer = () => {
     let hasBeenNotified = false;
@@ -60,17 +65,22 @@ export function getServerState(
   }).then((serverState) => {
     let shouldRefetch = false;
 
-    // <DynamicWidgets> requires another query to retrieve the dynamic widgets
-    // to render.
+    // Two-pass widgets require another query to discover and mount child widgets.
     walkIndex(searchRef.current!.mainIndex, (index) => {
-      shouldRefetch =
-        shouldRefetch ||
-        index
-          .getWidgets()
-          .some((widget) => widget.$$type === 'ais.dynamicWidgets');
+      let current: typeof index | null = index;
+      while (current) {
+        if (current._isolated) {
+          return;
+        }
+        current = current.getParent();
+      }
+
+      shouldRefetch = shouldRefetch || index.getWidgets().some(isTwoPassWidget);
     });
 
     if (shouldRefetch) {
+      resetWidgetId();
+
       return execute({
         children: (
           <InstantSearchSSRProvider {...serverState}>
@@ -80,6 +90,7 @@ export function getServerState(
         renderToString,
         searchRef,
         notifyServer: createNotifyServer(),
+        skipRecommend: true,
       });
     }
 
@@ -92,6 +103,7 @@ type ExecuteArgs = {
   renderToString: RenderToString;
   notifyServer: InstantSearchServerContextApi<UiState, UiState>['notifyServer'];
   searchRef: SearchRef;
+  skipRecommend?: boolean;
 };
 
 function execute({
@@ -99,6 +111,7 @@ function execute({
   renderToString,
   notifyServer,
   searchRef,
+  skipRecommend,
 }: ExecuteArgs) {
   return Promise.resolve()
     .then(() => {
@@ -127,11 +140,14 @@ function execute({
         );
       }
 
-      return waitForResults(searchRef.current);
+      return waitForResults(searchRef.current, skipRecommend);
     })
-    .then(() => {
+    .then((requestParamsList) => {
       return {
-        initialResults: getInitialResults(searchRef.current!.mainIndex),
+        initialResults: getInitialResults(
+          searchRef.current!.mainIndex,
+          requestParamsList
+        ),
       };
     });
 }

@@ -1,6 +1,6 @@
 /** @jsx h */
 
-import { cx } from '@algolia/ui-components-shared';
+import { cx } from 'instantsearch-ui-components';
 import { h, Component } from 'preact';
 
 import { range } from '../../lib/utils';
@@ -8,13 +8,13 @@ import { range } from '../../lib/utils';
 import Pit from './Pit';
 import Rheostat from './Rheostat';
 
+import type { HandleProps } from './Rheostat';
 import type { RangeBoundaries } from '../../connectors/range/connectRange';
 import type { ComponentCSSClasses } from '../../types';
 import type {
   RangeSliderCssClasses,
   RangeSliderWidgetParams,
 } from '../../widgets/range-slider/range-slider';
-import type { HandleProps } from './Rheostat';
 
 export type RangeSliderComponentCSSClasses =
   ComponentCSSClasses<RangeSliderCssClasses>;

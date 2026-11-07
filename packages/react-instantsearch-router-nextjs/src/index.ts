@@ -1,5 +1,7 @@
 import history from 'instantsearch.js/es/lib/routers/history';
 
+import { stripLocaleFromUrl } from './utils/stripLocaleFromUrl';
+
 import type { Router, UiState } from 'instantsearch.js';
 import type { BrowserHistoryArgs } from 'instantsearch.js/es/lib/routers/history';
 import type { Router as NextRouter, SingletonRouter } from 'next/router';
@@ -91,6 +93,11 @@ export function createInstantSearchRouterNext<TRouteState = UiState>(
     });
   }
 
+  /**
+   * Marker to skip `routeChangeComplete` event when the push comes from the router itself.
+   */
+  let lastPushFromThis = false;
+
   const router: Router<TRouteState> & { _isNextRouter?: boolean } = history({
     start(onUpdate) {
       if (beforeStart) {
@@ -101,9 +108,10 @@ export function createInstantSearchRouterNext<TRouteState = UiState>(
       handler = () => {
         // Without this check, we would trigger an unnecessary search when navigating
         // to a page without InstantSearch
-        if (singletonRouter.pathname === initialPathname) {
+        if (singletonRouter.pathname === initialPathname && !lastPushFromThis) {
           onUpdate();
         }
+        lastPushFromThis = false;
       };
       singletonRouter.events.on('routeChangeComplete', handler);
 
@@ -116,14 +124,11 @@ export function createInstantSearchRouterNext<TRouteState = UiState>(
         let nextPathname = new URL(window.location.href).pathname;
 
         // We strip the locale from the pathname if it's present
-        if (singletonRouter.locale) {
-          nextPathname = nextPathname.replace(
-            previousPathname === '/'
-              ? singletonRouter.locale
-              : `/${singletonRouter.locale}`,
-            ''
-          );
-        }
+        nextPathname = stripLocaleFromUrl(
+          nextPathname,
+          singletonRouter.locale,
+          previousPathname !== '/'
+        );
 
         // We only want to trigger a server request when going back/forward to a different page
         return previousPathname !== nextPathname;
@@ -150,17 +155,15 @@ export function createInstantSearchRouterNext<TRouteState = UiState>(
       singletonRouter.beforePopState(ownBeforePopState);
     },
     push(newUrl) {
-      let url = newUrl;
-      // We need to do this because there's an error when using i18n on the root path
-      // it says for example `pages/fr.js` doesn't exist
-      if (singletonRouter.locale) {
-        url = url.replace(`/${singletonRouter.locale}`, '');
-      }
+      // We need to do this because there's an error when using i18n on the
+      // root path it says for example `pages/fr.js` doesn't exist
+      const url = stripLocaleFromUrl(newUrl, singletonRouter.locale);
 
       // No need to provide the second argument, Next.js will know what to do
       singletonRouter.push(url, undefined, {
         shallow: true,
       });
+      lastPushFromThis = true;
     },
     ...routerOptions,
   });

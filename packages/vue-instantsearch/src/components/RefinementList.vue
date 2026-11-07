@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="[suit(), !state.canRefine && suit('', 'noRefinement')]"
+    :class="[suit(), items.length === 0 && suit('', 'noRefinement')]"
     v-if="state"
   >
     <slot
@@ -19,6 +19,7 @@
       <div :class="suit('searchBox')" v-if="searchable">
         <search-input
           v-model="searchForFacetValues"
+          :show-loading-indicator="true"
           :placeholder="searchablePlaceholder"
           :class-names="classNames"
         />
@@ -30,7 +31,7 @@
       >
         <div :class="suit('noResults')">No results.</div>
       </slot>
-      <ul :class="suit('list')">
+      <ul v-if="items.length > 0" :class="suit('list')">
         <li
           :class="[suit('item'), item.isRefined && suit('item', 'selected')]"
           v-for="item in items"
@@ -69,6 +70,8 @@
         @click="toggleShowMore"
         v-if="showMore"
         :disabled="!state.canToggleShowMore"
+        :aria-expanded="state.isShowingMore ? 'true' : 'false'"
+        :aria-label="showMoreButtonLabel"
       >
         <slot name="showMoreLabel" :is-showing-more="state.isShowingMore">
           Show {{ state.isShowingMore ? 'less' : 'more' }}
@@ -79,7 +82,7 @@
 </template>
 
 <script>
-import { connectRefinementList } from 'instantsearch.js/es/connectors';
+import { connectRefinementList } from 'instantsearch.js/es/connectors/index';
 
 import { createPanelConsumerMixin } from '../mixins/panel';
 import { createSuitMixin } from '../mixins/suit';
@@ -140,6 +143,11 @@ export default {
       type: Boolean,
       required: false,
       default: false,
+    },
+    showMoreButtonLabel: {
+      type: String,
+      required: false,
+      default: undefined,
     },
     sortBy: {
       type: [Array, Function],

@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 
 import { render } from '@testing-library/react';
@@ -164,6 +164,7 @@ describe('Menu', () => {
               </li>
             </ul>
             <button
+              aria-expanded="false"
               class="ais-Menu-showMore"
             >
               Show more
@@ -254,6 +255,7 @@ describe('Menu', () => {
             </li>
           </ul>
           <button
+            aria-expanded="false"
             class="ais-Menu-showMore SHOWMORE ais-Menu-showMore--disabled DISABLEDSHOWMORE"
             disabled=""
           >

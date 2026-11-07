@@ -1,3 +1,4 @@
+import { isTwoPassWidget } from 'instantsearch.js/es/lib/utils';
 import { useEffect, useRef } from 'react';
 
 import { dequal } from './dequal';
@@ -5,6 +6,7 @@ import { use } from './use';
 import { useInstantSearchContext } from './useInstantSearchContext';
 import { useIsomorphicLayoutEffect } from './useIsomorphicLayoutEffect';
 import { useRSCContext } from './useRSCContext';
+import { warn } from './warn';
 
 import type { Widget } from 'instantsearch.js';
 import type { IndexWidget } from 'instantsearch.js/es/widgets/index/index';
@@ -14,13 +16,16 @@ export function useWidget<TWidget extends Widget | IndexWidget, TProps>({
   parentIndex,
   props,
   shouldSsr,
+  skipSuspense,
 }: {
   widget: TWidget;
   parentIndex: IndexWidget;
   props: TProps;
   shouldSsr: boolean;
+  skipSuspense: boolean;
 }) {
-  const waitingForResultsRef = useRSCContext();
+  const { waitForResultsRef, countRef, ignoreMultipleHooksWarning } =
+    useRSCContext();
 
   const prevPropsRef = useRef<TProps>(props);
   useEffect(() => {
@@ -47,7 +52,7 @@ export function useWidget<TWidget extends Widget | IndexWidget, TProps>({
 
     // Scenario 1: the widget is added for the first time.
     if (!cleanupTimerRef.current) {
-      if (!shouldAddWidgetEarly) {
+      if (!shouldSsr) {
         parentIndex.addWidgets([widget]);
       }
     }
@@ -59,19 +64,19 @@ export function useWidget<TWidget extends Widget | IndexWidget, TProps>({
 
       // Warning: if an unstable function prop is provided, `dequal` is not able
       // to keep its reference and therefore will consider that props did change.
-      // This could unsollicitely remove/add the widget, therefore forget its state,
-      // and could be a source of confusion.
+      // This unintentionally replaces the widget, which is wasteful (it causes
+      // a search), even though `updateWidget` below keeps its state.
       // If users face this issue, we should advise them to provide stable function
       // references.
       const arePropsEqual = dequal(props, prevPropsRef.current);
 
-      // If props did change, then we execute the cleanup function instantly
-      // and then add the widget back. This lets us add the widget without
+      // If props did change, then we replace the widget instantly instead of
       // waiting for the scheduled cleanup function to finish (that we canceled
-      // above).
+      // above). `updateWidget` hands the previous widget's `uiState` over to the
+      // new one, so that a parameter change doesn't reset the state the widget
+      // still owns — which would otherwise break routing.
       if (!arePropsEqual) {
-        parentIndex.removeWidgets([previousWidget]);
-        parentIndex.addWidgets([widget]);
+        parentIndex.updateWidget(previousWidget, widget);
       }
     }
 
@@ -79,32 +84,44 @@ export function useWidget<TWidget extends Widget | IndexWidget, TProps>({
       // We don't remove the widget right away, but rather schedule it so that
       // we're able to cancel it in the next effect.
       cleanupTimerRef.current = setTimeout(() => {
+        cleanupTimerRef.current = null;
         search._schedule(() => {
           if (search._preventWidgetCleanup) return;
           parentIndex.removeWidgets([previousWidget]);
         });
       });
     };
-  }, [parentIndex, widget, shouldAddWidgetEarly, search, props]);
+  }, [parentIndex, widget, shouldSsr, search, props]);
 
   if (
     shouldAddWidgetEarly ||
-    waitingForResultsRef?.current?.status === 'pending'
+    waitForResultsRef?.current?.status === 'pending'
   ) {
     parentIndex.addWidgets([widget]);
   }
 
-  if (
-    typeof window === 'undefined' &&
-    waitingForResultsRef?.current &&
-    // We need the widgets contained in the index to be added before we trigger the search request.
-    widget.$$type !== 'ais.index'
-  ) {
-    use(waitingForResultsRef.current);
-    // If we made a second request because of DynamicWidgets, we need to wait for the second result,
-    // except for DynamicWidgets itself which needs to render its children after the first result.
-    if (widget.$$type !== 'ais.dynamicWidgets' && search.helper?.lastResults) {
-      use(waitingForResultsRef.current);
+  if (waitForResultsRef?.current && !skipSuspense) {
+    use(waitForResultsRef.current);
+    // If we made a second request because of two-pass widgets, we need to
+    // wait for the second result — except for the two-pass widgets themselves
+    // which need to render their children after the first result.
+    if (!isTwoPassWidget(widget) && search.helper?.lastResults) {
+      use(waitForResultsRef.current);
     }
+  }
+
+  if (waitForResultsRef?.current?.status === 'fulfilled') {
+    countRef.current += 1;
+    warn(
+      ignoreMultipleHooksWarning ||
+        countRef.current <= parentIndex.getWidgets().length,
+      `We detected you may have a component with multiple InstantSearch hooks.
+
+With Next.js, you need to set \`skipSuspense\` to \`true\` for all but the last hook in the component, otherwise, only the first hook will be rendered on the server.
+
+This warning can be a false positive if you are using dynamic widgets or multi-index, in which case you can ignore it by setting \`ignoreMultipleHooksWarning\` to \`true\` in \`<InstantSearchNext\`.
+
+For more information, see https://www.algolia.com/doc/guides/building-search-ui/going-further/server-side-rendering/react/#composing-hooks`
+    );
   }
 }

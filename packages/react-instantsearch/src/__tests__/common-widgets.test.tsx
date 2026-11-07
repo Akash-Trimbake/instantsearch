@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 import { runTestSuites } from '@instantsearch/tests';
 import * as suites from '@instantsearch/tests/widgets';
@@ -8,6 +8,7 @@ import React from 'react';
 
 import {
   InstantSearch,
+  useCompare,
   RefinementList,
   HierarchicalMenu,
   Breadcrumb,
@@ -24,6 +25,21 @@ import {
   CurrentRefinements,
   ToggleRefinement,
   SortBy,
+  Stats,
+  RelatedProducts,
+  FrequentlyBoughtTogether,
+  TrendingItems,
+  TrendingFacets,
+  LookingSimilar,
+  PoweredBy,
+  DynamicWidgets,
+  Chat,
+  ChatTrigger,
+  PromptSuggestions,
+  ResultCard,
+  Autocomplete,
+  FilterSuggestions,
+  CompareBar,
 } from '..';
 
 import type { TestOptionsMap, TestSetupsMap } from '@instantsearch/tests';
@@ -33,7 +49,7 @@ import type { SendEventForHits } from 'instantsearch.js/es/lib/utils';
 type TestSuites = typeof suites;
 const testSuites: TestSuites = suites;
 
-const testSetups: TestSetupsMap<TestSuites> = {
+const testSetups: TestSetupsMap<TestSuites, 'react'> = {
   createRefinementListWidgetTests({ instantSearchOptions, widgetParams }) {
     render(
       <InstantSearch {...instantSearchOptions}>
@@ -127,6 +143,9 @@ const testSetups: TestSetupsMap<TestSuites> = {
     render(
       <InstantSearch {...instantSearchOptions}>
         <SearchBox />
+        <div id="hits-with-defaults">
+          <InfiniteHits {...widgetParams} />
+        </div>
         <InfiniteHits id="main-hits" hitComponent={MainHit} {...widgetParams} />
         <Index indexName="nested">
           <InfiniteHits id="nested-hits" hitComponent={NestedHit} />
@@ -204,6 +223,9 @@ const testSetups: TestSetupsMap<TestSuites> = {
       </InstantSearch>
     );
   },
+  createRangeSliderWidgetTests() {
+    throw new Error('RangeSlider is not supported in React InstantSearch');
+  },
   createInstantSearchWidgetTests({ instantSearchOptions }) {
     render(
       <InstantSearch {...instantSearchOptions}>
@@ -268,6 +290,12 @@ const testSetups: TestSetupsMap<TestSuites> = {
       </form>
     );
   },
+  createRatingMenuWidgetTests() {
+    throw new Error('RatingMenu is not supported in React InstantSearch');
+  },
+  createNumericMenuWidgetTests() {
+    throw new Error('NumericMenu is not supported in React InstantSearch');
+  },
   createToggleRefinementWidgetTests({ instantSearchOptions, widgetParams }) {
     render(
       <InstantSearch {...instantSearchOptions}>
@@ -295,6 +323,214 @@ const testSetups: TestSetupsMap<TestSuites> = {
       </InstantSearch>
     );
   },
+  createStatsWidgetTests({ instantSearchOptions, widgetParams }) {
+    render(
+      <InstantSearch {...instantSearchOptions}>
+        <Stats {...widgetParams} />
+        <GlobalErrorSwallower />
+      </InstantSearch>
+    );
+  },
+  createRelatedProductsWidgetTests({ instantSearchOptions, widgetParams }) {
+    render(
+      <InstantSearch {...instantSearchOptions}>
+        <RelatedProducts {...widgetParams} />
+        <GlobalErrorSwallower />
+      </InstantSearch>
+    );
+  },
+  createFrequentlyBoughtTogetherWidgetTests({
+    instantSearchOptions,
+    widgetParams,
+  }) {
+    render(
+      <InstantSearch {...instantSearchOptions}>
+        <FrequentlyBoughtTogether {...widgetParams} />
+        <GlobalErrorSwallower />
+      </InstantSearch>
+    );
+  },
+  createTrendingItemsWidgetTests({ instantSearchOptions, widgetParams }) {
+    const { facetName, facetValue, ...params } = widgetParams;
+    const facetParams =
+      facetName && facetValue ? { facetName, facetValue } : {};
+
+    render(
+      <InstantSearch {...instantSearchOptions}>
+        <TrendingItems {...facetParams} {...params} />
+        <GlobalErrorSwallower />
+      </InstantSearch>
+    );
+  },
+  createTrendingFacetsWidgetTests({ instantSearchOptions, widgetParams }) {
+    render(
+      <InstantSearch {...instantSearchOptions}>
+        <TrendingFacets {...widgetParams} />
+        <GlobalErrorSwallower />
+      </InstantSearch>
+    );
+  },
+  createLookingSimilarWidgetTests({ instantSearchOptions, widgetParams }) {
+    render(
+      <InstantSearch {...instantSearchOptions}>
+        <LookingSimilar {...widgetParams} />
+        <GlobalErrorSwallower />
+      </InstantSearch>
+    );
+  },
+  createPoweredByWidgetTests({ instantSearchOptions, widgetParams }) {
+    render(
+      <InstantSearch {...instantSearchOptions}>
+        <PoweredBy {...widgetParams} />
+        <GlobalErrorSwallower />
+      </InstantSearch>
+    );
+
+    return {
+      flavor: 'react-instantsearch',
+    };
+  },
+  createMenuSelectWidgetTests() {
+    throw new Error('MenuSelect is not supported in React InstantSearch');
+  },
+  createDynamicWidgetsWidgetTests({ instantSearchOptions, widgetParams }) {
+    render(
+      <InstantSearch {...instantSearchOptions}>
+        <div className="ais-DynamicWidgets">
+          <DynamicWidgets {...widgetParams}>
+            <RefinementList attribute="brand" />
+            <Menu attribute="category" />
+            <HierarchicalMenu
+              attributes={[
+                'hierarchicalCategories.lvl0',
+                'hierarchicalCategories.lvl1',
+              ]}
+            />
+          </DynamicWidgets>
+        </div>
+        <GlobalErrorSwallower />
+      </InstantSearch>
+    );
+  },
+  createChatWidgetTests({ instantSearchOptions, widgetParams }) {
+    const {
+      renderChat = true,
+      renderRefinements,
+      ...chatWidgetParams
+    } = widgetParams;
+    render(
+      <InstantSearch {...instantSearchOptions}>
+        {renderRefinements && (
+          <>
+            <SearchBox />
+            <RefinementList attribute="brand" />
+            <RefinementList attribute="category" />
+            <HierarchicalMenu
+              attributes={[
+                'hierarchicalCategories.lvl0',
+                'hierarchicalCategories.lvl1',
+                'hierarchicalCategories.lvl2',
+              ]}
+            />
+          </>
+        )}
+        <ChatTrigger />
+        {renderChat && <Chat {...chatWidgetParams} />}
+        <GlobalErrorSwallower />
+      </InstantSearch>
+    );
+  },
+  createAutocompleteWidgetTests({ instantSearchOptions, widgetParams }) {
+    render(
+      <InstantSearch {...instantSearchOptions}>
+        <Autocomplete {...widgetParams} />
+        <GlobalErrorSwallower />
+      </InstantSearch>
+    );
+  },
+  createFilterSuggestionsWidgetTests({ instantSearchOptions, widgetParams }) {
+    render(
+      <InstantSearch {...instantSearchOptions}>
+        <FilterSuggestions {...widgetParams} />
+        <GlobalErrorSwallower />
+      </InstantSearch>
+    );
+  },
+  createPromptSuggestionsWidgetTests({ instantSearchOptions, widgetParams }) {
+    // The widget hands clicked suggestions to a <Chat> on the same index, and
+    // errors without one, so the default setup renders both. `renderChat: false`
+    // is how a test asks for the unconfigured page.
+    const { renderChat = true, ...promptSuggestionsWidgetParams } =
+      widgetParams;
+
+    render(
+      <InstantSearch {...instantSearchOptions}>
+        <PromptSuggestions {...promptSuggestionsWidgetParams} />
+        {/*
+          A dedicated id: the `agentId` the chat suites use keys persisted
+          messages in `sessionStorage` that leak across tests in this file.
+        */}
+        {renderChat && <Chat agentId="promptSuggestionsChatAgentId" />}
+        <GlobalErrorSwallower />
+      </InstantSearch>
+    );
+  },
+  createResultCardWidgetTests({ instantSearchOptions, widgetParams }) {
+    // "Continue in chat" needs a <Chat> with the card's `agentId` on the same
+    // index, so the default setup renders both. `renderChat: false` is how a
+    // test asks for the unconfigured page.
+    const { renderChat = true, ...resultCardWidgetParams } = widgetParams;
+
+    render(
+      <InstantSearch {...instantSearchOptions}>
+        <ResultCard {...resultCardWidgetParams} />
+        {renderChat && <Chat agentId={resultCardWidgetParams.agentId} />}
+        <GlobalErrorSwallower />
+      </InstantSearch>
+    );
+  },
+  createCompareBarWidgetTests({ instantSearchOptions, widgetParams }) {
+    // The bar hands the comparison to a <Chat> on the same index, so the
+    // default setup renders both. A sibling `useCompare` consumer renders a
+    // toggle per product, the way a per-hit "Compare" button would.
+    const {
+      renderChat = true,
+      products = [],
+      ...compareBarWidgetParams
+    } = widgetParams;
+
+    function CompareToggles() {
+      const { isSelected, toggleItem } = useCompare({
+        configurationId: compareBarWidgetParams.configurationId,
+      });
+
+      return (
+        <>
+          {products.map((product) => (
+            <button
+              key={product.objectID}
+              data-testid={`CompareToggle-${product.objectID}`}
+              aria-pressed={isSelected(product.objectID)}
+              onClick={() => toggleItem(product)}
+            />
+          ))}
+        </>
+      );
+    }
+
+    render(
+      <InstantSearch {...instantSearchOptions}>
+        <CompareToggles />
+        <CompareBar {...compareBarWidgetParams} />
+        {/*
+          A dedicated id: the `agentId` the chat suites use keys persisted
+          messages in `sessionStorage` that leak across tests in this file.
+        */}
+        {renderChat && <Chat agentId="compareBarChatAgentId" />}
+        <GlobalErrorSwallower />
+      </InstantSearch>
+    );
+  },
 };
 
 const testOptions: TestOptionsMap<TestSuites> = {
@@ -306,6 +542,17 @@ const testOptions: TestOptionsMap<TestSuites> = {
   createInfiniteHitsWidgetTests: { act },
   createHitsWidgetTests: { act },
   createRangeInputWidgetTests: { act },
+  createRangeSliderWidgetTests: {
+    skippedTests: {
+      'RangeSlider widget common tests': true,
+    },
+  },
+  createRatingMenuWidgetTests: {
+    act,
+    skippedTests: {
+      'RatingMenu widget common tests': true,
+    },
+  },
   createInstantSearchWidgetTests: { act },
   createHitsPerPageWidgetTests: { act },
   createClearRefinementsWidgetTests: { act },
@@ -313,6 +560,34 @@ const testOptions: TestOptionsMap<TestSuites> = {
   createToggleRefinementWidgetTests: { act },
   createSearchBoxWidgetTests: { act },
   createSortByWidgetTests: { act },
+  createStatsWidgetTests: { act },
+  createNumericMenuWidgetTests: {
+    act,
+    skippedTests: {
+      'NumericMenu widget common tests': true,
+    },
+  },
+  createRelatedProductsWidgetTests: { act },
+  createFrequentlyBoughtTogetherWidgetTests: { act },
+  createTrendingItemsWidgetTests: { act },
+  createTrendingFacetsWidgetTests: { act },
+  createLookingSimilarWidgetTests: { act },
+  createPoweredByWidgetTests: { act },
+  createMenuSelectWidgetTests: {
+    act,
+    skippedTests: {
+      'MenuSelect widget common tests': true,
+    },
+  },
+  createDynamicWidgetsWidgetTests: { act },
+  createChatWidgetTests: {
+    act,
+  },
+  createAutocompleteWidgetTests: { act },
+  createFilterSuggestionsWidgetTests: { act },
+  createPromptSuggestionsWidgetTests: { act },
+  createCompareBarWidgetTests: { act },
+  createResultCardWidgetTests: { act },
 };
 
 /**
@@ -327,6 +602,7 @@ function GlobalErrorSwallower() {
 
 describe('Common widget tests (React InstantSearch)', () => {
   runTestSuites({
+    flavor: 'react',
     testSuites,
     testSetups,
     testOptions,

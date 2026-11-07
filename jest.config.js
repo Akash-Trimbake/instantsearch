@@ -4,7 +4,7 @@
 const config = {
   rootDir: process.cwd(),
   testRunner: 'jest-circus',
-  testEnvironment: 'node',
+  testEnvironment: '@instantsearch/testutils/jest-environment-node.ts',
   setupFilesAfterEnv: ['./tests/utils/setupTests.ts'],
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
@@ -14,15 +14,14 @@ const config = {
     '<rootDir>/examples/',
     '<rootDir>/packages/algoliasearch-helper',
     '<rootDir>/packages/create-instantsearch-app',
-    '<rootDir>/packages/react-instantsearch-router-nextjs',
-    '<rootDir>/packages/react-instantsearch-nextjs',
+    '<rootDir>/packages/react-instantsearch-router-nextjs/__tests__',
+    '<rootDir>/packages/react-instantsearch-nextjs/__tests__',
     '/__utils__/',
   ],
   watchPathIgnorePatterns: [
     '<rootDir>/packages/*/cjs',
     '<rootDir>/packages/*/dist',
     '<rootDir>/packages/*/es',
-    '<rootDir>/packages/*/stories',
     '<rootDir>/examples',
     '<rootDir>/website',
   ],
@@ -30,7 +29,9 @@ const config = {
     'jest-watch-typeahead/filename',
     'jest-watch-typeahead/testname',
   ],
-  transformIgnorePatterns: ['node_modules/(?!(search-insights)/)'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(search-insights|algoliasearch)/)',
+  ],
   transform: {
     '^.+\\.(j|t)sx?$': 'babel-jest',
     '^.+\\.vue$': '@vue/vue2-jest',
@@ -38,11 +39,17 @@ const config = {
   moduleFileExtensions: ['tsx', 'ts', 'js', 'vue'],
   moduleNameMapper: {
     '^react-instantsearch$': '<rootDir>/packages/react-instantsearch/src/',
+    '^react-instantsearch-core/dist/es(.*)$':
+      '<rootDir>/packages/react-instantsearch-core/src$1',
     '^react-instantsearch-(.*[^v6])$':
       '<rootDir>/packages/react-instantsearch-$1/src/',
     '^instantsearch.js$': '<rootDir>/packages/instantsearch.js/src/',
     '^instantsearch.js/es(.*)$': '<rootDir>/packages/instantsearch.js/src$1',
     '^instantsearch.js/(.*)$': '<rootDir>/packages/instantsearch.js/$1',
+    '^instantsearch-ui-components$':
+      '<rootDir>/packages/instantsearch-ui-components/src/',
+    '^instantsearch-ui-components/(.*)$':
+      '<rootDir>/packages/instantsearch-ui-components/$1',
   },
   modulePathIgnorePatterns: [
     '<rootDir>/packages/create-instantsearch-app/src/templates',

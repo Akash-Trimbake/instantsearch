@@ -3,6 +3,392 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.30.1](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.30.0...algoliasearch-helper@3.30.1) (2026-10-26)
+
+
+### Bug Fixes
+
+* **composition:** keep disjunctive marker on * presence ([#7319](https://github.com/algolia/instantsearch/issues/7319)) ([ff8caec](https://github.com/algolia/instantsearch/commit/ff8caecf0944043a84bae9628f72f6021ffbb4b6))
+
+
+
+
+
+# [3.30.0](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.29.4...algoliasearch-helper@3.30.0) (2026-10-01)
+
+
+### Features
+
+* **result-card:** activate from `renderingContent` ([#7266](https://github.com/algolia/instantsearch/issues/7266)) ([d8069fa](https://github.com/algolia/instantsearch/commit/d8069fa2ee978211abbf33ed613f0cc05e82d192))
+
+
+
+
+
+## [3.29.4](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.29.3...algoliasearch-helper@3.29.4) (2026-09-29)
+
+
+### Bug Fixes
+
+* **search:** deduplicate identical queries ([#7255](https://github.com/algolia/instantsearch/issues/7255)) ([79427b5](https://github.com/algolia/instantsearch/commit/79427b559d803364599958a8729130141ca9c65e)), closes [#6795](https://github.com/algolia/instantsearch/issues/6795)
+
+
+
+
+
+## [3.29.3](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.29.2...algoliasearch-helper@3.29.3) (2026-08-06)
+
+**Note:** Version bump only for package algoliasearch-helper
+
+
+
+
+
+## [3.29.2](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.29.1...algoliasearch-helper@3.29.2) (2026-07-07)
+
+**Note:** Version bump only for package algoliasearch-helper
+
+
+
+
+
+# [3.29.0](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.28.2...algoliasearch-helper@3.29.0) (2026-05-05)
+
+
+### Features
+
+* **composition:** add Feeds widget to support multifeed ([#7004](https://github.com/algolia/instantsearch/issues/7004)) ([ecc40d9](https://github.com/algolia/instantsearch/commit/ecc40d98dd19922b510dd3d769fc490519cede64)), closes [#6954](https://github.com/algolia/instantsearch/issues/6954)
+
+
+
+
+
+## [3.28.2](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.28.1...algoliasearch-helper@3.28.2) (2026-04-28)
+
+
+### Bug Fixes
+
+* **algoliasearch-helper:** convert Infinity/-Infinity to null in _parseNumbers ([#6938](https://github.com/algolia/instantsearch/issues/6938)) ([031d88a](https://github.com/algolia/instantsearch/commit/031d88a2dbefe6c621a844c4abfc4938b3cc38e1)), closes [#14131](https://github.com/algolia/instantsearch/issues/14131)
+
+
+
+
+
+## [3.28.1](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.28.0...algoliasearch-helper@3.28.1) (2026-03-24)
+
+**Note:** Version bump only for package algoliasearch-helper
+
+
+
+
+
+# [3.28.0](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.27.1...algoliasearch-helper@3.28.0) (2026-02-25)
+
+
+### Features
+
+* **build:** unify build system across monorepo ([#6886](https://github.com/algolia/instantsearch/issues/6886)) ([e8b2ef7](https://github.com/algolia/instantsearch/commit/e8b2ef7dc1b7d98f1ee5518fad7607b5f31bbd96))
+
+
+
+
+
+## [3.27.1](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.27.0...algoliasearch-helper@3.27.1) (2026-02-10)
+
+
+### Bug Fixes
+
+* **composition:** forwards parameters in sffv ([#6889](https://github.com/algolia/instantsearch/issues/6889)) ([f908559](https://github.com/algolia/instantsearch/commit/f9085591ebb71d8f56f580c94d6afb7ccbeb5475)), closes [/github.com/algolia/instantsearch/pull/6792/changes#diff-6af3d106c335b51f0e85d49f808b248a9704cb12dab1472606b6e9a383d981b1](https://github.com//github.com/algolia/instantsearch/pull/6792/changes/issues/diff-6af3d106c335b51f0e85d49f808b248a9704cb12dab1472606b6e9a383d981b1) [/github.com/algolia/instantsearch/blob/59f8fbf1a70262ab0927f5fdcde5c3ecbd10e3ba/packages/instantsearch.js/src/lib/InstantSearch.ts#L580-L583](https://github.com//github.com/algolia/instantsearch/blob/59f8fbf1a70262ab0927f5fdcde5c3ecbd10e3ba/packages/instantsearch.js/src/lib/InstantSearch.ts/issues/L580-L583)
+
+
+
+
+
+# [3.27.0](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.26.1...algoliasearch-helper@3.27.0) (2025-12-30)
+
+
+### Features
+
+* **sortBy:** support composition sorting strategies ([#6841](https://github.com/algolia/instantsearch/issues/6841)) ([f7d7a66](https://github.com/algolia/instantsearch/commit/f7d7a66359bbd2479ae120f7de6823f15695d78d))
+
+
+
+
+
+## [3.26.1](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.26.0...algoliasearch-helper@3.26.1) (2025-11-10)
+
+
+### Bug Fixes
+
+* **refinementList:** hide facets based on `renderingContent` when searched ([#6792](https://github.com/algolia/instantsearch/issues/6792)) ([ee0d2e4](https://github.com/algolia/instantsearch/commit/ee0d2e4bcb2106425dfd1d0a6fecca0c647f3805))
+* **refinementList:** hide facets when when `sortBy` is provided ([#6785](https://github.com/algolia/instantsearch/issues/6785)) ([cb92a6b](https://github.com/algolia/instantsearch/commit/cb92a6b33b192587fa257b8685af2dc42e248cbf))
+
+
+
+
+
+# [3.26.0](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.25.0...algoliasearch-helper@3.26.0) (2025-06-16)
+
+
+### Features
+
+* **facetOrdering:** implement hidden facets in SFFV ([#6648](https://github.com/algolia/instantsearch/issues/6648)) ([2641a67](https://github.com/algolia/instantsearch/commit/2641a6759db398fa407c84af418a059ac2e1079b))
+
+
+
+
+
+# [3.25.0](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.24.3...algoliasearch-helper@3.25.0) (2025-04-29)
+
+
+### Features
+
+* **recommend:** filter out input objectIDs [RECO-2436] ([#6620](https://github.com/algolia/instantsearch/issues/6620)) ([c737519](https://github.com/algolia/instantsearch/commit/c7375190e6793c2f5134f9a40b6587d2829cb5ea))
+
+
+
+
+
+## [3.24.3](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.24.2...algoliasearch-helper@3.24.3) (2025-03-18)
+
+**Note:** Version bump only for package algoliasearch-helper
+
+
+
+
+
+## [3.24.2](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.24.1...algoliasearch-helper@3.24.2) (2025-03-04)
+
+**Note:** Version bump only for package algoliasearch-helper
+
+
+
+
+
+## [3.24.1](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.24.0...algoliasearch-helper@3.24.1) (2025-01-28)
+
+
+### Bug Fixes
+
+* rawContent was not correctly cloned (hence undefined) ([#6549](https://github.com/algolia/instantsearch/issues/6549)) ([0b2d4af](https://github.com/algolia/instantsearch/commit/0b2d4af313179c86583a5167519de18af45600b3))
+
+
+
+
+
+# [3.24.0](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.23.1...algoliasearch-helper@3.24.0) (2025-01-28)
+
+
+### Features
+
+* expose raw request content under _rawContent ([#6544](https://github.com/algolia/instantsearch/issues/6544)) ([5883502](https://github.com/algolia/instantsearch/commit/5883502df95dd423558aa7824721e2e4954ff0ea))
+
+
+
+
+
+## [3.23.1](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.23.0...algoliasearch-helper@3.23.1) (2025-01-21)
+
+
+### Bug Fixes
+
+* **facets:** choose highest value in disjunctive ([#6536](https://github.com/algolia/instantsearch/issues/6536)) ([e458ee5](https://github.com/algolia/instantsearch/commit/e458ee5c31fdb48f2075899dd7ef35880e8d0873)), closes [#6445](https://github.com/algolia/instantsearch/issues/6445)
+
+
+
+
+
+# [3.23.0](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.22.6...algoliasearch-helper@3.23.0) (2025-01-14)
+
+
+### Features
+
+* composition ([#6437](https://github.com/algolia/instantsearch/issues/6437)) ([cee83ab](https://github.com/algolia/instantsearch/commit/cee83ab4473dc738dda7c6d928ebed88e3ec4c8d))
+
+
+
+
+
+## [3.22.6](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.22.5...algoliasearch-helper@3.22.6) (2024-12-09)
+
+
+### Bug Fixes
+
+* **disjunctive:** prefer values of main query for facet count ([#6445](https://github.com/algolia/instantsearch/issues/6445)) ([9bc841a](https://github.com/algolia/instantsearch/commit/9bc841a12ee466d981f9ce2f20e17dbc74ca6b44))
+* **insights:** ensure the same token is used when rendered multiple times server side ([#6456](https://github.com/algolia/instantsearch/issues/6456)) ([c3a1c70](https://github.com/algolia/instantsearch/commit/c3a1c70fa79109a9ed7eb4509274887d8b0c972e))
+
+
+
+
+
+## [3.22.5](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.22.4...algoliasearch-helper@3.22.5) (2024-09-10)
+
+
+### Bug Fixes
+
+* **client:** use client.search in sffv for v5 ([#6354](https://github.com/algolia/instantsearch/issues/6354)) ([11399e6](https://github.com/algolia/instantsearch/commit/11399e6fd232f005c4e3e8aba842c50110869ae5))
+
+
+
+
+
+## [3.22.4](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.22.3...algoliasearch-helper@3.22.4) (2024-08-20)
+
+
+### Bug Fixes
+
+* **client:** support v5 fully ([#6270](https://github.com/algolia/instantsearch/issues/6270)) ([c3b5e80](https://github.com/algolia/instantsearch/commit/c3b5e80bbb449acb3b9719a7449c6c926d034e34)), closes [#6271](https://github.com/algolia/instantsearch/issues/6271) [#6286](https://github.com/algolia/instantsearch/issues/6286)
+
+
+
+
+
+## [3.22.3](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.22.2...algoliasearch-helper@3.22.3) (2024-07-16)
+
+
+### Bug Fixes
+
+* **cache:** support nested hierarchical refinements ([#6283](https://github.com/algolia/instantsearch/issues/6283)) ([8a0ae01](https://github.com/algolia/instantsearch/commit/8a0ae01ddfceec129075256b19a0cc634ae5bb6e))
+
+
+
+
+
+## [3.22.2](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.22.1...algoliasearch-helper@3.22.2) (2024-07-02)
+
+
+### Bug Fixes
+
+* **algoliasearch:** v5 does not default threshold to 0 ([#6251](https://github.com/algolia/instantsearch/issues/6251)) ([762e633](https://github.com/algolia/instantsearch/commit/762e6335692bc0f05243edbf168f1be0b8d31f0c))
+
+
+
+
+
+## [3.22.1](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.22.0...algoliasearch-helper@3.22.1) (2024-06-20)
+
+
+### Bug Fixes
+
+* **helper:** don't send empty "tagRefinements" and "facets" parameters ([#6204](https://github.com/algolia/instantsearch/issues/6204)) ([fb7cc23](https://github.com/algolia/instantsearch/commit/fb7cc23acfaad55579032587a4222647e240838b))
+* **types:** make algoliasearch detection compatible with TS 5.4.5 ([#6244](https://github.com/algolia/instantsearch/issues/6244)) ([4a7afc3](https://github.com/algolia/instantsearch/commit/4a7afc3924f1c9f4ea92024cd137dd46835a9323)), closes [#5989](https://github.com/algolia/instantsearch/issues/5989)
+
+
+
+
+
+# [3.22.0](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.21.0...algoliasearch-helper@3.22.0) (2024-06-18)
+
+
+### Features
+
+* **facets:** allow hiding values through renderingContent ([#6239](https://github.com/algolia/instantsearch/issues/6239)) ([b7eef90](https://github.com/algolia/instantsearch/commit/b7eef90a6b0650afe5f42f6904a239c74fa6ad37))
+* **infinite-hits:** return banner info with connectInfiniteHits ([#6230](https://github.com/algolia/instantsearch/issues/6230)) ([0d50f0d](https://github.com/algolia/instantsearch/commit/0d50f0deaa20602d0fe51043f58ec2cf40d6c107))
+
+
+
+
+
+# [3.21.0](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.20.0...algoliasearch-helper@3.21.0) (2024-05-28)
+
+
+### Features
+
+* **recommend:** enable server-side rendering ([#6215](https://github.com/algolia/instantsearch/issues/6215)) ([21404fc](https://github.com/algolia/instantsearch/commit/21404fc530a9aad640a88fac1a48244f4e665828))
+
+
+
+
+
+# [3.20.0](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.19.0...algoliasearch-helper@3.20.0) (2024-05-21)
+
+
+### Features
+
+* **recommend:** cache results per `$$id` ([#6181](https://github.com/algolia/instantsearch/issues/6181)) ([c0f4802](https://github.com/algolia/instantsearch/commit/c0f480238f25cf03a8b0f861389d04a8c7a99b14))
+* **recommend:** enable multiple `objectIDs` in connectors ([#6176](https://github.com/algolia/instantsearch/issues/6176)) ([ffe6a1c](https://github.com/algolia/instantsearch/commit/ffe6a1c2ff60e31c1e91ff3dc0791948d0a4c0f5))
+* **recommend:** handle multiple `objectIDs` for one widget ([#6160](https://github.com/algolia/instantsearch/issues/6160)) ([f6a1c1c](https://github.com/algolia/instantsearch/commit/f6a1c1cedf693662850a35cef6636e4b9b746cdd))
+* **recommend:** map recommend results to widgets ([a5a87dd](https://github.com/algolia/instantsearch/commit/a5a87dd0315606ce70bf1787ba0566de8944d134))
+
+
+
+
+
+# [3.19.0](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.18.0...algoliasearch-helper@3.19.0) (2024-04-30)
+
+
+### Features
+
+* **hits:** return banner from connectHits ([#6130](https://github.com/algolia/instantsearch/issues/6130)) ([5bde60d](https://github.com/algolia/instantsearch/commit/5bde60df53401dc3cdf32b1446ec960ca4060112))
+
+
+
+
+
+# [3.18.0](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.17.0...algoliasearch-helper@3.18.0) (2024-04-18)
+
+
+### Features
+
+* **helper:** add methods to request and retrieve recommendations ([#6111](https://github.com/algolia/instantsearch/issues/6111)) ([1b683c5](https://github.com/algolia/instantsearch/commit/1b683c5ebbcae4a77a43ff2034da406c9eb0dbc4))
+
+
+
+
+
+# [3.17.0](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.16.3...algoliasearch-helper@3.17.0) (2024-04-02)
+
+
+### Features
+
+* **helper:** set up state management for recommendations ([#6100](https://github.com/algolia/instantsearch/issues/6100)) ([bc5122f](https://github.com/algolia/instantsearch/commit/bc5122faae0159ab532a59c80490852c0a625e22))
+
+
+
+
+
+## [3.16.3](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.16.2...algoliasearch-helper@3.16.3) (2024-02-27)
+
+
+### Bug Fixes
+
+* **helper:** correctly set isRefined for hierarchical facet values with trailing spaces ([#6059](https://github.com/algolia/instantsearch/issues/6059)) ([a12e567](https://github.com/algolia/instantsearch/commit/a12e5678e6bf4e7fe010c09bf958ac216acb0ed7))
+
+
+
+
+
+## [3.16.2](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.16.1...algoliasearch-helper@3.16.2) (2024-01-23)
+
+
+### Bug Fixes
+
+* **perf:** improve speed of setQueryParameters ([d1aa720](https://github.com/algolia/instantsearch/commit/d1aa720c8e4e1aad2d7b64e385a29b258240c7df))
+* **requestBuilder:** sort facet refinements in a non-mutating manner ([#6012](https://github.com/algolia/instantsearch/issues/6012)) ([31dbf87](https://github.com/algolia/instantsearch/commit/31dbf874faa582b930ada59781c56642436ad35c)), closes [#5764](https://github.com/algolia/instantsearch/issues/5764)
+
+
+
+
+
+## [3.16.1](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.16.0...algoliasearch-helper@3.16.1) (2023-12-19)
+
+**Note:** Version bump only for package algoliasearch-helper
+
+
+
+
+
+# [3.16.0](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.15.0...algoliasearch-helper@3.16.0) (2023-12-07)
+
+
+### Features
+
+* **hierarchical-menu:** persist refined root level count with a future flag ([#5950](https://github.com/algolia/instantsearch/issues/5950)) ([79ee485](https://github.com/algolia/instantsearch/commit/79ee485b63904debe16e033011d6bf728c1f1a0b))
+
+
+
+
+
 # [3.15.0](https://github.com/algolia/instantsearch/compare/algoliasearch-helper@3.14.2...algoliasearch-helper@3.15.0) (2023-10-24)
 
 

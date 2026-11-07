@@ -11,17 +11,74 @@ import * as widgets from '../..';
 import type { InstantSearch as InstantSearchClass } from 'instantsearch.js';
 import type { ComponentProps } from 'react';
 
-type AllWidgets = typeof widgets;
 // We only track widgets that use connectors.
-const NON_WIDGETS = ['Highlight', 'Snippet', 'PoweredBy'] as const;
-type RegularWidgets = Omit<typeof widgets, typeof NON_WIDGETS[number]>;
+const NON_WIDGETS = [
+  'Highlight',
+  'ReverseHighlight',
+  'Snippet',
+  'PoweredBy',
+  'Chat',
+  // Deprecated alias of `Autocomplete`, covered separately.
+  'EXPERIMENTAL_Autocomplete',
+  'createDefaultTools',
+  'SearchIndexToolType',
+  'RecommendToolType',
+  'MemorizeToolType',
+  'MemorySearchToolType',
+  'PonderToolType',
+  'DisplayResultsToolType',
+  'CompareProductsToolType',
+  'GroupedResultsToolType',
+] as const;
+type RegularWidgets = Omit<typeof widgets, (typeof NON_WIDGETS)[number]>;
+
+// Non-components that should be excluded from SingleWidget type
+const NON_COMPONENTS = [
+  'createDefaultTools',
+  'SearchIndexToolType',
+  'RecommendToolType',
+  'MemorizeToolType',
+  'MemorySearchToolType',
+  'PonderToolType',
+  'DisplayResultsToolType',
+  'CompareProductsToolType',
+  'GroupedResultsToolType',
+  // `ChatTrigger`'s permissive `ComponentProps<'button'>` base widens the
+  // `SingleWidget` union enough that TS can't narrow `widget.Component` in
+  // the switch below, breaking other cases. Covered by a dedicated test in
+  // `ChatTrigger.test.tsx` instead.
+  'ChatTrigger',
+  // `CompareBar` renders nothing until items are selected, so the shared
+  // className/root-attribute assertions don't apply. Covered by a dedicated
+  // test in `CompareBar.test.tsx` instead.
+  'CompareBar',
+  // Deprecated alias of `Autocomplete`, covered separately.
+  'EXPERIMENTAL_Autocomplete',
+] as const;
+type ComponentWidgets = Omit<typeof widgets, (typeof NON_COMPONENTS)[number]>;
 
 export type SingleWidget = {
-  [name in keyof AllWidgets]: {
+  [name in keyof ComponentWidgets]: {
     name: name;
-    Component: AllWidgets[name];
+    Component: ComponentWidgets[name];
   };
-}[keyof AllWidgets];
+}[keyof ComponentWidgets];
+
+/**
+ * Get the props for a widget, excluding the ref prop as it's not valid for
+ * "Internal" components due to the usage of a more generic ComponentProps used
+ * than the React.ComponentProps.
+ * We also make classNames stricter to ensure type compatibility until
+ * all widgets can support class list arrays.
+ */
+type Props<TWidget extends SingleWidget> = Omit<
+  ComponentProps<TWidget['Component']>,
+  'ref' | 'classNames'
+> & {
+  classNames?: {
+    root: string | undefined;
+  };
+};
 
 /**
  * Intermediary component to render any React InstantSearch widget with their minimal props
@@ -29,8 +86,27 @@ export type SingleWidget = {
 function Widget<TWidget extends SingleWidget>({
   widget,
   ...props
-}: { widget: TWidget } & ComponentProps<TWidget['Component']>) {
+}: { widget: TWidget } & Props<TWidget>) {
+  // `CompareBar` is not part of `SingleWidget` (see `NON_COMPONENTS`), but
+  // `getAllInstantSearchWidgets` still renders it and it requires an ID.
+  if ((widget.name as string) === 'CompareBar') {
+    return <widgets.CompareBar configurationId="configurationId" />;
+  }
+
   switch (widget.name) {
+    case 'ResultCard': {
+      return <widget.Component agentId="test-agent-id" {...props} />;
+    }
+    case 'PromptSuggestions': {
+      // The connector requires `agentId` unless a custom `transport` is given.
+      return (
+        <widget.Component
+          agentId="test-agent-id"
+          configurationId="prompt-suggestions"
+          {...props}
+        />
+      );
+    }
     case 'Breadcrumb': {
       return <widget.Component attributes={['']} {...props} />;
     }
@@ -57,11 +133,21 @@ function Widget<TWidget extends SingleWidget>({
       );
     }
     case 'Snippet':
-    case 'Highlight': {
+    case 'Highlight':
+    case 'ReverseHighlight': {
       return (
         <widget.Component
           hit={{ objectID: '', __position: 0 }}
           attribute="objectID"
+          {...props}
+        />
+      );
+    }
+    case 'Chat': {
+      return (
+        <widget.Component
+          agentId="agentId"
+          disableTriggerValidation
           {...props}
         />
       );
@@ -74,6 +160,21 @@ function Widget<TWidget extends SingleWidget>({
     }
     case 'SearchBox': {
       return <widget.Component onSubmit={undefined} {...props} />;
+    }
+    case 'FrequentlyBoughtTogether':
+    case 'RelatedProducts':
+    case 'LookingSimilar': {
+      return <widget.Component objectIDs={['1']} {...props} />;
+    }
+    case 'TrendingFacets': {
+      return <widget.Component facetName="brand" {...props} />;
+    }
+    case 'Autocomplete': {
+      // @ts-expect-error - incorrectly expects onSelect from ComponentProps<'div'>
+      return <widget.Component {...props} />;
+    }
+    case 'FilterSuggestions': {
+      return <widget.Component agentId="test-agent-id" {...props} />;
     }
     default: {
       return <widget.Component {...props} />;
@@ -92,7 +193,7 @@ export function getAllInstantSearchWidgets() {
         regularWidget
       ): regularWidget is [
         keyof RegularWidgets,
-        RegularWidgets[keyof RegularWidgets]
+        RegularWidgets[keyof RegularWidgets],
       ] =>
         (NON_WIDGETS as readonly string[]).includes(regularWidget[0]) === false
     )
@@ -131,20 +232,23 @@ export function getAllInstantSearchWidgets() {
 /**
  * Retrieve all widget components, wrapped inside InstantSearch, ready to render
  */
-export function getAllWidgets() {
-  return Object.entries(widgets).map(([name, Component]) => {
-    const widget = { name, Component } as SingleWidget;
 
-    return {
-      name,
-      Component: (props: Omit<ComponentProps<typeof Widget>, 'widget'>) => (
-        <InstantSearch
-          searchClient={createSearchClient({})}
-          indexName="indexName"
-        >
-          <Widget {...props} widget={widget} />
-        </InstantSearch>
-      ),
-    };
-  });
+export function getAllWidgets() {
+  return Object.entries(widgets)
+    .filter(([name]) => !(NON_COMPONENTS as readonly string[]).includes(name))
+    .map(([name, Component]) => {
+      const widget = { name, Component } as SingleWidget;
+
+      return {
+        name,
+        Component: (props: Omit<ComponentProps<typeof Widget>, 'widget'>) => (
+          <InstantSearch
+            searchClient={createSearchClient({})}
+            indexName="indexName"
+          >
+            <Widget {...props} widget={widget} />
+          </InstantSearch>
+        ),
+      };
+    });
 }

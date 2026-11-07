@@ -1,3 +1,7 @@
+/**
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
+ */
+
 import {
   createSearchClient,
   createSingleSearchResponse,
@@ -53,7 +57,7 @@ describe('connectInfiniteHitsWithInsights', () => {
     const helper = algoliasearchHelper(createSearchClient(), '', {});
     helper.search = jest.fn();
 
-    widget.init!(
+    widget.init(
       createInitOptionsWithInsights({
         state: helper.state,
         helper,
@@ -71,7 +75,7 @@ describe('connectInfiniteHitsWithInsights', () => {
       createSingleSearchResponse({ hits }),
     ]);
 
-    widget.render!(
+    widget.render(
       createRenderOptionsWithInsights({
         state: helper.state,
         results,
@@ -91,7 +95,7 @@ describe('connectInfiniteHitsWithInsights', () => {
     const helper = algoliasearchHelper(createSearchClient(), '', {});
     helper.search = jest.fn();
 
-    widget.init!(
+    widget.init(
       createInitOptionsWithInsights({
         state: helper.state,
         helper,
@@ -106,7 +110,7 @@ describe('connectInfiniteHitsWithInsights', () => {
       createSingleSearchResponse({ hits }),
     ]);
 
-    widget.render!(
+    widget.render(
       createRenderOptionsWithInsights({
         state: helper.state,
         results,
@@ -125,7 +129,7 @@ describe('connectInfiniteHitsWithInsights', () => {
     const helper = algoliasearchHelper(createSearchClient(), '', {});
     const widget = makeWidget({});
     expect(() =>
-      widget.dispose!(createDisposeOptions({ helper, state: helper.state }))
+      widget.dispose(createDisposeOptions({ helper, state: helper.state }))
     ).not.toThrow();
   });
 });

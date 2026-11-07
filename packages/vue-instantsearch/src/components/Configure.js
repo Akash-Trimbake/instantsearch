@@ -1,4 +1,4 @@
-import { connectConfigure } from 'instantsearch.js/es/connectors';
+import { connectConfigure } from 'instantsearch.js/es/connectors/index';
 
 import { createSuitMixin } from '../mixins/suit';
 import { createWidgetMixin } from '../mixins/widget';
@@ -21,7 +21,7 @@ export default {
   computed: {
     widgetParams() {
       return {
-        searchParameters: this.$attrs,
+        searchParameters: Object.assign({}, this.$attrs),
       };
     },
   },

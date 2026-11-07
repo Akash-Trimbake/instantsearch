@@ -495,6 +495,61 @@ test('getFacetValues(hierarchical) takes `rootPath` into account', function () {
   expect(facetValues).toEqual(expected);
 });
 
+test('getFacetValues(hierarchical) correctly sets `isRefined` on facet values with trailing spaces', function () {
+  var searchParams = new SearchParameters({
+    index: 'instant_search',
+    hierarchicalFacets: [
+      {
+        name: 'type',
+        attributes: ['type1', 'type2', 'type3'],
+      },
+    ],
+    hierarchicalFacetsRefinements: { type: ['something > discounts '] },
+  });
+
+  var result = {
+    query: '',
+    facets: {
+      type1: {
+        dogs: 1,
+        something: 5,
+      },
+      type2: {
+        'dogs > hounds': 1,
+        'something > discounts ': 5,
+      },
+      type3: {
+        'something > discounts  > -5%': 1,
+        'something > discounts  > full price': 4,
+      },
+    },
+    exhaustiveFacetsCount: true,
+  };
+
+  var results = new SearchResults(searchParams, [result, result, result]);
+
+  var facetValues = results.getFacetValues('type');
+
+  expect(facetValues).toEqual(
+    expect.objectContaining({
+      name: 'type',
+      isRefined: true,
+      data: expect.arrayContaining([
+        expect.objectContaining({
+          name: 'something',
+          isRefined: true,
+          data: expect.arrayContaining([
+            expect.objectContaining({
+              name: 'discounts',
+              isRefined: true,
+            }),
+          ]),
+        }),
+      ]),
+    })
+  );
+});
+
 test('getFacetValues(unknown) returns undefined (does not throw)', function () {
   var searchParams = new SearchParameters({
     index: 'instant_search',
@@ -673,4 +728,147 @@ test('getFacetValues(hierarchical) when current state is different to constructo
   };
 
   expect(facetValues).toEqual(expected);
+});
+
+test('getFacetValues(facetName) prefers the "main" facet result (disjunctive)', function () {
+  var data = require('./getFacetValues/disjunctive-non-exhaustive.json');
+  var searchParams = new SearchParameters(data.state);
+  var result = new SearchResults(searchParams, data.content.results);
+
+  var facetValues = result.getFacetValues('brand');
+
+  var expected = [
+    { count: 1000, isRefined: true, name: 'Apple', escapedValue: 'Apple' },
+    {
+      count: 551,
+      isRefined: false,
+      name: 'Insignia™',
+      escapedValue: 'Insignia™',
+    },
+    { count: 511, isRefined: false, name: 'Samsung', escapedValue: 'Samsung' },
+  ];
+
+  expect(facetValues).toEqual(expected);
+});
+
+test('getFacetValues(facetName) prefers the "main" facet result (hierarchical) (persistHierarchicalRootCount: true)', function () {
+  var data = require('./getFacetValues/hierarchical-non-exhaustive.json');
+  var searchParams = new SearchParameters(data.state);
+  var result = new SearchResults(searchParams, data.content.results, {
+    persistHierarchicalRootCount: true,
+  });
+
+  var facetValues = result.getFacetValues('brand').data;
+
+  var expected = [
+    {
+      count: 1000,
+      data: null,
+      isRefined: true,
+      name: 'Apple',
+      escapedValue: 'Apple',
+      path: 'Apple',
+      exhaustive: true,
+    },
+    {
+      count: 551,
+      data: null,
+      isRefined: false,
+      name: 'Insignia™',
+      escapedValue: 'Insignia™',
+      path: 'Insignia™',
+      exhaustive: true,
+    },
+    {
+      count: 551,
+      data: null,
+      isRefined: false,
+      name: 'Samsung',
+      escapedValue: 'Samsung',
+      path: 'Samsung',
+      exhaustive: true,
+    },
+  ];
+
+  expect(facetValues).toEqual(expected);
+});
+
+test('getFacetValues(facetName) prefers the "main" facet result (hierarchical) (persistHierarchicalRootCount: false)', function () {
+  var data = require('./getFacetValues/hierarchical-non-exhaustive.json');
+  var searchParams = new SearchParameters(data.state);
+  var result = new SearchResults(searchParams, data.content.results, {
+    persistHierarchicalRootCount: false,
+  });
+
+  var facetValues = result.getFacetValues('brand').data;
+
+  var expected = [
+    {
+      count: 50,
+      data: null,
+      isRefined: true,
+      name: 'Apple',
+      escapedValue: 'Apple',
+      path: 'Apple',
+      exhaustive: true,
+    },
+    {
+      count: 551,
+      data: null,
+      isRefined: false,
+      name: 'Insignia™',
+      escapedValue: 'Insignia™',
+      path: 'Insignia™',
+      exhaustive: true,
+    },
+    {
+      count: 551,
+      data: null,
+      isRefined: false,
+      name: 'Samsung',
+      escapedValue: 'Samsung',
+      path: 'Samsung',
+      exhaustive: true,
+    },
+  ];
+
+  expect(facetValues).toEqual(expected);
+});
+
+test('getFacetValues(disjunctive) does not return values that should be hidden', function () {
+  var data = require('./getFacetValues/disjunctive.json');
+  var hidden = {
+    renderingContent: {
+      facetOrdering: {
+        values: {
+          brand: {
+            hide: ['Samsung'],
+          },
+        },
+      },
+    },
+  };
+  var results = data.content.results.slice();
+  results[0] = Object.assign(hidden, results[0]);
+
+  var searchParams = new SearchParameters(data.state);
+  var result = new SearchResults(searchParams, results);
+
+  var facetValuesDefault = result.getFacetValues('brand');
+  var facetValuesWithSorting = result.getFacetValues('brand', {
+    sortBy: ['count:desc'],
+  });
+
+  var expected = [
+    {
+      count: 551,
+      isRefined: false,
+      name: 'Insignia™',
+      escapedValue: 'Insignia™',
+    },
+    { count: 386, isRefined: true, name: 'Apple', escapedValue: 'Apple' },
+  ];
+
+  expect(facetValuesDefault).toEqual(expected);
+  expect(facetValuesWithSorting).toEqual(expected);
 });

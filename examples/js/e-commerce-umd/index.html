@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -8,7 +8,7 @@
     />
     <meta name="theme-color" content="#e2a400" />
 
-    <base href="/examples/js-umd/e-commerce/" />
+    <base href="%BASE_URL%" />
 
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="shortcut icon" href="./favicon.png" />
@@ -17,15 +17,16 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css?family=Hind:400,600|Open+Sans:300,400,700&display=swap"
     />
+
     <link
       rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/instantsearch.css@7.3.1/themes/reset-min.css"
+      href="/packages/instantsearch.css/themes/reset-min.css"
     />
     <link rel="stylesheet" href="./src/theme.css" />
     <link rel="stylesheet" href="./src/app.css" />
     <link rel="stylesheet" href="./src/app.mobile.css" />
     <link rel="stylesheet" href="./src/widgets/PriceSlider.css" />
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=default%2CArray.prototype.find%2CArray.prototype.includes%2CPromise%2CObject.assign%2CObject.entries"></script>
+    <script src="./polyfills.js"></script>
     <title>E-commerce demo (UMD) | Algolia</title>
   </head>
 
@@ -119,7 +120,6 @@
     </aside>
 
     <script src="/packages/instantsearch.js/dist/instantsearch.production.min.js"></script>
-    <script type="module" src="./src/env.js"></script>
     <script type="module" src="./src/app.ts"></script>
   </body>
 </html>

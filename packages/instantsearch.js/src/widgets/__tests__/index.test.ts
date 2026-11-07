@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 /* global google */
 import * as widgets from '..';
@@ -34,6 +34,7 @@ function initiateAllWidgets(): Array<[WidgetNames, Widget | IndexWidget]> {
     return [name, initiateWidget(name, widget)];
   });
 
+  // eslint-disable-next-line complexity
   function initiateWidget<TName extends WidgetNames>(
     name: TName,
     widget: Widgets[TName]
@@ -147,6 +148,73 @@ function initiateAllWidgets(): Array<[WidgetNames, Widget | IndexWidget]> {
         const EXPERIMENTAL_answers = widget as Widgets['EXPERIMENTAL_answers'];
         return EXPERIMENTAL_answers({ container, queryLanguages: ['en'] });
       }
+      case 'frequentlyBoughtTogether':
+      case 'relatedProducts':
+      case 'lookingSimilar': {
+        const recommendWidgetWithObjectIDs =
+          widget as Widgets['frequentlyBoughtTogether'];
+        return recommendWidgetWithObjectIDs({
+          container,
+          objectIDs: ['objectID'],
+        });
+      }
+      case 'autocomplete':
+      case 'EXPERIMENTAL_autocomplete': {
+        const autocompleteWidget = widget as Widgets['autocomplete'];
+
+        const instance = autocompleteWidget({ container, indices: [] });
+        const autocomplete = instance.find(
+          (w) => w.$$type === 'ais.autocomplete'
+        );
+
+        if (!autocomplete) {
+          throw new Error('autocomplete widget not found');
+        }
+
+        return autocomplete;
+      }
+      case 'promptSuggestions': {
+        const promptSuggestions = widget as Widgets['promptSuggestions'];
+        return promptSuggestions({
+          container,
+          agentId: 'test-agent-id',
+          configurationId: 'prompt-suggestions',
+        });
+      }
+      case 'compareBar': {
+        const compareBar = widget as Widgets['compareBar'];
+        return compareBar({ container, configurationId: 'compare' });
+      }
+      case 'resultCard': {
+        const resultCard = widget as Widgets['resultCard'];
+        return resultCard({ container, agentId: 'test-agent-id' });
+      }
+      case 'filterSuggestions': {
+        const filterSuggestions = widget as Widgets['filterSuggestions'];
+        return filterSuggestions({
+          container,
+          agentId: 'test-agent-id',
+          attributes: ['attr'],
+        });
+      }
+      case 'chatTrigger': {
+        const chatTriggerWidget = widget as Widgets['chatTrigger'];
+        return chatTriggerWidget({
+          container,
+        });
+      }
+      case 'trendingFacets': {
+        const trendingFacets = widget as Widgets['trendingFacets'];
+        return trendingFacets({ container, facetName: 'brand' });
+      }
+      case 'feeds': {
+        const feedsWidget = widget as Widgets['feeds'];
+        return feedsWidget({
+          container,
+          widgets: () => [],
+          isolated: false,
+        });
+      }
       default: {
         const defaultWidget = widget as UnknownWidgetFactory;
         return defaultWidget({ container, attribute: 'attr' });
@@ -169,7 +237,7 @@ describe('widgets', () => {
       const widgetInstances = initiateAllWidgets();
 
       widgetInstances.forEach(([name, widget]) =>
-        expect([name, widget.$$type.substr(0, 4)]).toEqual([name, 'ais.'])
+        expect([name, widget.$$type.substring(0, 4)]).toEqual([name, 'ais.'])
       );
     });
   });
@@ -187,7 +255,7 @@ describe('widgets', () => {
       const widgetInstances = initiateAllWidgets();
 
       widgetInstances.forEach(([name, widget]) =>
-        expect([name, widget.$$widgetType!.substr(0, 4)]).toEqual([
+        expect([name, widget.$$widgetType!.substring(0, 4)]).toEqual([
           name,
           'ais.',
         ])

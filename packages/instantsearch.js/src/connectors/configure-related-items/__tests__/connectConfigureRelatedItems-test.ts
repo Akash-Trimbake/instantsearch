@@ -1,3 +1,7 @@
+/**
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
+ */
+
 import { createSearchClient } from '@instantsearch/mocks';
 import { wait } from '@instantsearch/testutils/wait';
 
@@ -126,9 +130,7 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/configure-r
         {
           indexName: 'indexName',
           params: {
-            facets: [],
             facetFilters: ['objectID:-1'],
-            tagFilters: '',
             sumOrFiltersScores: true,
             optionalFilters: [
               'brand:Amazon<score=3>',
@@ -168,9 +170,7 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/configure-r
         {
           indexName: 'indexName',
           params: {
-            facets: [],
             facetFilters: ['objectID:-1'],
-            tagFilters: '',
             sumOrFiltersScores: true,
             optionalFilters: [
               'brand:Amazon<score=3>',
@@ -213,9 +213,7 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/configure-r
         {
           indexName: 'indexName',
           params: {
-            facets: [],
             facetFilters: ['objectID:-1'],
-            tagFilters: '',
             sumOrFiltersScores: true,
             optionalFilters: [
               'brand:Amazon<score=3>',
@@ -276,9 +274,7 @@ See https://www.algolia.com/doc/api-reference/api-parameters/optionalFilters/`);
         {
           indexName: 'indexName',
           params: {
-            facets: [],
             facetFilters: ['objectID:-1'],
-            tagFilters: '',
             sumOrFiltersScores: true,
             optionalFilters: [
               'brand:Amazon<score=3>',

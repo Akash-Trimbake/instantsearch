@@ -25,7 +25,9 @@ export function createInsightsTests(
         const delay = 100;
         const margin = 10;
         const attribute = 'one';
-        window.aa = Object.assign(jest.fn(), { version: '2.6.0' });
+        const hierarchicalAttribute = 'hierarchicalCategories.lvl0';
+
+        window.aa = Object.assign(jest.fn(), { version: '2.17.2' });
 
         const options = {
           instantSearchOptions: {
@@ -39,7 +41,7 @@ export function createInsightsTests(
                       params,
                     }: Parameters<SearchClient['search']>[0][number]) =>
                       createSingleSearchResponse({
-                        // @ts-expect-error this key is private, thus not in the types
+                        // @ts-ignore this key doesn't exist in v3, v4 types
                         _automaticInsights: true,
                         hits: [{ objectID: '1' }],
                         facets: {
@@ -48,7 +50,7 @@ export function createInsightsTests(
                             Apple: 200,
                           },
                         },
-                        page: params!.page,
+                        page: params.page,
                         nbPages: 20,
                       })
                   )
@@ -62,6 +64,7 @@ export function createInsightsTests(
             },
             hits: {},
             pagination: {},
+            hierarchicalMenu: { attributes: [hierarchicalAttribute] },
           },
         };
 
@@ -76,7 +79,8 @@ export function createInsightsTests(
         });
 
         // initial calls because the middleware is attached
-        expect(window.aa).toHaveBeenCalledTimes(4);
+        // 5 base calls + 1 usage event (__start__)
+        expect(window.aa).toHaveBeenCalledTimes(6);
         expect(window.aa).toHaveBeenCalledWith(
           'addAlgoliaAgent',
           'insights-middleware'
@@ -109,7 +113,9 @@ export function createInsightsTests(
         const delay = 100;
         const margin = 10;
         const attribute = 'one';
-        window.aa = Object.assign(jest.fn(), { version: '2.6.0' });
+        const hierarchicalAttribute = 'hierarchicalCategories.lvl0';
+
+        window.aa = Object.assign(jest.fn(), { version: '2.17.2' });
 
         const options = {
           instantSearchOptions: {
@@ -131,7 +137,7 @@ export function createInsightsTests(
                             Apple: 200,
                           },
                         },
-                        page: params!.page,
+                        page: params.page,
                         nbPages: 20,
                       })
                   )
@@ -145,13 +151,18 @@ export function createInsightsTests(
             },
             hits: {},
             pagination: {},
+            hierarchicalMenu: { attributes: [hierarchicalAttribute] },
           },
         };
 
         await setup(options);
 
-        // initial calls because the middleware is attached
-        expect(window.aa).toHaveBeenCalledTimes(3);
+        // initial calls because the middleware is attached. The usage
+        // `__start__` event is sent via `sendEvents` on the next tick; we
+        // filter it out so the base-call count stays deterministic.
+        expect(
+          window.aa.mock.calls.filter(([method]) => method !== 'sendEvents')
+        ).toHaveLength(4);
         expect(window.aa).toHaveBeenCalledWith(
           'addAlgoliaAgent',
           'insights-middleware'
@@ -164,7 +175,8 @@ export function createInsightsTests(
         });
 
         // Once result is available
-        expect(window.aa).toHaveBeenCalledTimes(4);
+        // 5 base calls + 1 usage event (__start__)
+        expect(window.aa).toHaveBeenCalledTimes(6);
         expect(window.aa).toHaveBeenCalledWith(
           'viewedObjectIDs',
           {

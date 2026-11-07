@@ -1,3 +1,7 @@
+/**
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
+ */
+
 import { createSearchClient } from '@instantsearch/mocks';
 import algoliasearchHelper, { SearchParameters } from 'algoliasearch-helper';
 
@@ -289,7 +293,7 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/configure/j
           configure: {
             refine() {},
             widgetParams: {
-              searchParameters: { removeStopWords: ['group'] },
+              searchParameters: { removeStopWords: ['en'] },
             },
           },
         },
@@ -300,7 +304,7 @@ See documentation: https://www.algolia.com/doc/api-reference/widgets/configure/j
         refine: expect.any(Function),
         widgetParams: {
           searchParameters: {
-            removeStopWords: ['group'],
+            removeStopWords: ['en'],
             facetFilters: ['brand:Samsung'],
           },
         },

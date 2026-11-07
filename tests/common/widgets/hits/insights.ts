@@ -26,7 +26,7 @@ export function createInsightsTests(
       const delay = 100;
       const margin = 10;
       const hitsPerPage = 2;
-      window.aa = Object.assign(jest.fn(), { version: '2.6.0' });
+      window.aa = Object.assign(jest.fn(), { version: '2.17.2' });
       const options = {
         instantSearchOptions: {
           indexName: 'indexName',
@@ -51,6 +51,9 @@ export function createInsightsTests(
                       query,
                       page,
                       nbPages: 20,
+                      queryID: query
+                        ? `test-query-id-${query}`
+                        : 'test-query-id',
                     })
                 )
               );
@@ -79,9 +82,14 @@ export function createInsightsTests(
         ).toHaveLength(hitsPerPage);
       }
 
-      // View event called for each index once
+      // View event called for each index once (usage events are sent via
+      // `sendEvents`, so we count only `viewedObjectIDs` calls).
       {
-        expect(window.aa).toHaveBeenCalledTimes(3);
+        expect(
+          window.aa.mock.calls.filter(
+            ([method]) => method === 'viewedObjectIDs'
+          )
+        ).toHaveLength(2);
         expect(window.aa).toHaveBeenCalledWith(
           'viewedObjectIDs',
           {
@@ -130,9 +138,11 @@ export function createInsightsTests(
           await wait(0);
         });
 
-        // @TODO: This is a bug, we should not send a view event when the results are the same.
-        // see: https://github.com/algolia/instantsearch/issues/5442
-        expect(window.aa).toHaveBeenCalledTimes(3);
+        expect(
+          window.aa.mock.calls.filter(
+            ([method]) => method === 'viewedObjectIDs'
+          )
+        ).toHaveLength(2);
       }
     });
 
@@ -140,7 +150,7 @@ export function createInsightsTests(
       const delay = 100;
       const margin = 10;
       const hitsPerPage = 25;
-      window.aa = Object.assign(jest.fn(), { version: '2.6.0' });
+      window.aa = Object.assign(jest.fn(), { version: '2.17.2' });
       const options = {
         instantSearchOptions: {
           indexName: 'indexName',
@@ -165,6 +175,7 @@ export function createInsightsTests(
                       query,
                       page,
                       nbPages: 20,
+                      queryID: 'test-query-id',
                     })
                 )
               );
@@ -193,9 +204,14 @@ export function createInsightsTests(
         ).toHaveLength(hitsPerPage);
       }
 
-      // View event called for each index, batched in chunks of 20
+      // View event called for each index, batched in chunks of 20 (usage
+      // events are sent via `sendEvents`, so we count only `viewedObjectIDs`).
       {
-        expect(window.aa).toHaveBeenCalledTimes(6);
+        expect(
+          window.aa.mock.calls.filter(
+            ([method]) => method === 'viewedObjectIDs'
+          )
+        ).toHaveLength(4);
         expect(window.aa).toHaveBeenCalledWith(
           'viewedObjectIDs',
           {
@@ -276,7 +292,7 @@ export function createInsightsTests(
       const delay = 100;
       const margin = 10;
       const hitsPerPage = 2;
-      window.aa = Object.assign(jest.fn(), { version: '2.6.0' });
+      window.aa = Object.assign(jest.fn(), { version: '2.17.2' });
       const options = {
         instantSearchOptions: {
           indexName: 'indexName',
@@ -301,6 +317,7 @@ export function createInsightsTests(
                       query,
                       page,
                       nbPages: 20,
+                      queryID: 'test-query-id',
                     })
                 )
               );
@@ -343,6 +360,7 @@ export function createInsightsTests(
             index: 'indexName',
             objectIDs: ['indexName-0'],
             positions: [1],
+            queryID: 'test-query-id',
           },
           {
             headers: {
@@ -358,7 +376,7 @@ export function createInsightsTests(
       const delay = 100;
       const margin = 10;
       const hitsPerPage = 2;
-      window.aa = Object.assign(jest.fn(), { version: '2.6.0' });
+      window.aa = Object.assign(jest.fn(), { version: '2.17.2' });
       const options = {
         instantSearchOptions: {
           indexName: 'indexName',
@@ -383,6 +401,7 @@ export function createInsightsTests(
                       query,
                       page,
                       nbPages: 20,
+                      queryID: 'test-query-id',
                     })
                 )
               );
@@ -432,6 +451,7 @@ export function createInsightsTests(
             index: 'indexName',
             objectIDs: ['indexName-0'],
             positions: [1],
+            queryID: 'test-query-id',
           },
           {
             headers: {
@@ -447,7 +467,7 @@ export function createInsightsTests(
       const delay = 100;
       const margin = 10;
       const hitsPerPage = 2;
-      window.aa = Object.assign(jest.fn(), { version: '2.6.0' });
+      window.aa = Object.assign(jest.fn(), { version: '2.17.2' });
       const options = {
         instantSearchOptions: {
           indexName: 'indexName',
@@ -472,6 +492,7 @@ export function createInsightsTests(
                       query,
                       page,
                       nbPages: 20,
+                      queryID: 'test-query-id',
                     })
                 )
               );
@@ -518,6 +539,7 @@ export function createInsightsTests(
             index: 'indexName',
             objectIDs: ['indexName-0'],
             positions: [1],
+            queryID: 'test-query-id',
           },
           {
             headers: {
@@ -533,7 +555,7 @@ export function createInsightsTests(
       const delay = 100;
       const margin = 10;
       const hitsPerPage = 2;
-      window.aa = Object.assign(jest.fn(), { version: '2.6.0' });
+      window.aa = Object.assign(jest.fn(), { version: '2.17.2' });
       const options = {
         instantSearchOptions: {
           indexName: 'indexName',
@@ -558,6 +580,7 @@ export function createInsightsTests(
                       query,
                       page,
                       nbPages: 20,
+                      queryID: 'test-query-id',
                     })
                 )
               );
@@ -599,6 +622,7 @@ export function createInsightsTests(
             algoliaSource: ['instantsearch'],
             index: 'indexName',
             objectIDs: ['indexName-0'],
+            queryID: 'test-query-id',
           },
           {
             headers: {
@@ -615,6 +639,7 @@ export function createInsightsTests(
             index: 'indexName',
             objectIDs: ['indexName-0'],
             positions: [1],
+            queryID: 'test-query-id',
           },
           {
             headers: {
@@ -630,7 +655,7 @@ export function createInsightsTests(
       const delay = 100;
       const margin = 10;
       const hitsPerPage = 2;
-      window.aa = Object.assign(jest.fn(), { version: '2.6.0' });
+      window.aa = Object.assign(jest.fn(), { version: '2.17.2' });
       const options = {
         instantSearchOptions: {
           indexName: 'indexName',
@@ -655,6 +680,7 @@ export function createInsightsTests(
                       query,
                       page,
                       nbPages: 20,
+                      queryID: 'test-query-id',
                     })
                 )
               );
@@ -697,6 +723,7 @@ export function createInsightsTests(
             index: 'indexName',
             objectIDs: ['indexName-0'],
             positions: [1],
+            queryID: 'test-query-id',
           },
           {
             headers: {
@@ -712,7 +739,7 @@ export function createInsightsTests(
       const delay = 100;
       const margin = 10;
       const hitsPerPage = 2;
-      window.aa = Object.assign(jest.fn(), { version: '2.6.0' });
+      window.aa = Object.assign(jest.fn(), { version: '2.17.2' });
       const options = {
         instantSearchOptions: {
           indexName: 'indexName',
@@ -737,6 +764,7 @@ export function createInsightsTests(
                       query,
                       page,
                       nbPages: 20,
+                      queryID: 'test-query-id',
                     })
                 )
               );
@@ -781,6 +809,7 @@ export function createInsightsTests(
             index: 'nested',
             objectIDs: ['nested-0'],
             positions: [1],
+            queryID: 'test-query-id',
           },
           {
             headers: {
@@ -797,6 +826,7 @@ export function createInsightsTests(
             index: 'indexName',
             objectIDs: ['indexName-0'],
             positions: [1],
+            queryID: 'test-query-id',
           },
           {
             headers: {

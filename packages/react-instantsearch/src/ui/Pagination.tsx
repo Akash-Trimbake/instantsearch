@@ -1,6 +1,6 @@
+import { cx } from 'instantsearch-ui-components';
 import React from 'react';
 
-import { cx } from './lib/cx';
 import { isModifierClick } from './lib/isModifierClick';
 
 import type { CreateURL } from 'instantsearch.js';
@@ -204,6 +204,7 @@ export function Pagination({
                 currentPage: page + 1,
                 nbPages,
               })}
+              aria-current={page === currentPage ? 'page' : undefined}
               href={createURL(page)}
               onClick={() => onNavigate(page)}
             >

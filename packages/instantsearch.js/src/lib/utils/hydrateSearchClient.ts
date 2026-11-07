@@ -1,8 +1,29 @@
-// @ts-nocheck (types to be fixed during actual implementation)
-import type { InitialResults, SearchClient } from '../../types';
+import type {
+  SearchClient,
+  InitialResults,
+  ClientV3_4,
+  SearchOptions,
+  SearchResponse,
+  CompositionClient,
+} from '../../types';
+
+type ClientWithCache = SearchClient & { cache: Record<string, string> };
+type ClientWithTransporter = ClientV3_4 & {
+  transporter: { responsesCache: any };
+  search: (requests: any, ...args: any[]) => any;
+};
+
+function getServerResults(entry: InitialResults[string]) {
+  return entry.compositionFeedsResults?.length
+    ? entry.compositionFeedsResults
+    : entry.results || [];
+}
 
 export function hydrateSearchClient(
-  client: SearchClient,
+  client: (SearchClient | CompositionClient) & {
+    _cacheHydrated?: boolean;
+    _useCache?: boolean;
+  },
   results?: InitialResults
 ) {
   if (!results) {
@@ -14,11 +35,54 @@ export function hydrateSearchClient(
   // - Third party clients (detected by the `addAlgoliaAgent` function missing)
 
   if (
-    (!client.transporter || client._cacheHydrated) &&
+    (!('transporter' in client) || client._cacheHydrated) &&
     (!client._useCache || typeof client.addAlgoliaAgent !== 'function')
   ) {
     return;
   }
+
+  const cachedRequest = [
+    Object.keys(results).reduce<
+      Array<{
+        params?: string;
+        indexName?: string;
+      }>
+    >((acc, key) => {
+      const entry = results[key];
+      const { state, requestParams } = entry;
+      const serverResults = getServerResults(entry);
+      const mappedResults =
+        serverResults && state
+          ? serverResults.map((result, idx) => ({
+              indexName: state.index || result.index,
+              // We normalize the params received from the server as they can
+              // be serialized differently depending on the engine.
+              // We use search parameters from the server request to craft the cache
+              // if possible, and fallback to those from results if not.
+              ...(requestParams?.[idx] || result.params
+                ? {
+                    params: serializeQueryParameters(
+                      requestParams?.[idx] ||
+                        deserializeQueryParameters(result.params)
+                    ),
+                  }
+                : {}),
+            }))
+          : [];
+      return acc.concat(mappedResults);
+    }, []),
+  ];
+
+  const cachedResults = Object.keys(results).reduce<Array<SearchResponse<any>>>(
+    (acc, key) => {
+      const res = getServerResults(results[key]);
+      if (!res) {
+        return acc;
+      }
+      return acc.concat(res);
+    },
+    []
+  );
 
   // Algoliasearch API Client >= v4
   // To hydrate the client we need to populate the cache with the data from
@@ -27,17 +91,28 @@ export function hydrateSearchClient(
   // for us to compute the key the same way as `algoliasearch-client` we need
   // to populate it on a custom key and override the `search` method to
   // search on it first.
-  if (client.transporter && !client._cacheHydrated) {
+  if ('transporter' in client && !client._cacheHydrated) {
     client._cacheHydrated = true;
 
-    const baseMethod = client.search;
-    client.search = (requests, ...methodArgs) => {
-      const requestsWithSerializedParams = requests.map((request) => ({
-        ...request,
-        params: serializeQueryParameters(request.params),
-      }));
+    const baseMethod = client.search.bind(client) as unknown as (
+      query: any,
+      ...args: any[]
+    ) => any;
+    client.search = (
+      requests: Parameters<(SearchClient | CompositionClient)['search']>[0],
+      // @ts-ignore wanting type checks for v3 on this would make this too complex
+      ...methodArgs
+    ) => {
+      const requestsWithSerializedParams = Array.isArray(requests)
+        ? // search client
+          requests.map((request) => ({
+            ...request,
+            params: serializeQueryParameters(request.params),
+          }))
+        : // composition client
+          serializeQueryParameters(requests.requestBody.params);
 
-      return client.transporter.responsesCache.get(
+      return (client as ClientWithTransporter).transporter.responsesCache.get(
         {
           method: 'search',
           args: [requestsWithSerializedParams, ...methodArgs],
@@ -48,28 +123,13 @@ export function hydrateSearchClient(
       );
     };
 
-    // Populate the cache with the data from the server
-    client.transporter.responsesCache.set(
+    (client as ClientWithTransporter).transporter.responsesCache.set(
       {
         method: 'search',
-        args: [
-          Object.keys(results).reduce(
-            (acc, key) =>
-              acc.concat(
-                results[key].results.map((request) => ({
-                  indexName: request.index,
-                  params: request.params,
-                }))
-              ),
-            []
-          ),
-        ],
+        args: cachedRequest,
       },
       {
-        results: Object.keys(results).reduce(
-          (acc, key) => acc.concat(results[key].results),
-          []
-        ),
+        results: cachedResults,
       }
     );
   }
@@ -80,40 +140,38 @@ export function hydrateSearchClient(
   // a single-index result. You can find more information about the
   // computation of the key inside the client (see link below).
   // https://github.com/algolia/algoliasearch-client-javascript/blob/c27e89ff92b2a854ae6f40dc524bffe0f0cbc169/src/AlgoliaSearchCore.js#L232-L240
-  if (!client.transporter) {
+  if (!('transporter' in client)) {
     const cacheKey = `/1/indexes/*/queries_body_${JSON.stringify({
-      requests: Object.keys(results).reduce(
-        (acc, key) =>
-          acc.concat(
-            results[key].rawResults.map((request) => ({
-              indexName: request.index,
-              params: request.params,
-            }))
-          ),
-        []
-      ),
+      requests: cachedRequest,
     })}`;
 
-    client.cache = {
-      ...client.cache,
+    (client as ClientWithCache).cache = {
+      ...(client as ClientWithCache).cache,
       [cacheKey]: JSON.stringify({
-        results: Object.keys(results).reduce(
-          (acc, key) => acc.concat(results[key].rawResults),
-          []
+        results: Object.keys(results).map((key) =>
+          getServerResults(results[key])
         ),
       }),
     };
   }
 }
 
+function deserializeQueryParameters(parameters: string) {
+  return parameters.split('&').reduce<Record<string, any>>((acc, parameter) => {
+    const [key, value] = parameter.split('=');
+    acc[key] = value ? decodeURIComponent(value) : '';
+    return acc;
+  }, {});
+}
+
 // This function is copied from the algoliasearch v4 API Client. If modified,
 // consider updating it also in `serializeQueryParameters` from `@algolia/transporter`.
-function serializeQueryParameters(parameters) {
-  const isObjectOrArray = (value) =>
+function serializeQueryParameters(parameters: SearchOptions) {
+  const isObjectOrArray = (value: any) =>
     Object.prototype.toString.call(value) === '[object Object]' ||
     Object.prototype.toString.call(value) === '[object Array]';
 
-  const encode = (format, ...args) => {
+  const encode = (format: string, ...args: [string, any]) => {
     let i = 0;
     return format.replace(/%s/g, () => encodeURIComponent(args[i++]));
   };
@@ -123,9 +181,9 @@ function serializeQueryParameters(parameters) {
       encode(
         '%s=%s',
         key,
-        isObjectOrArray(parameters[key])
-          ? JSON.stringify(parameters[key])
-          : parameters[key]
+        isObjectOrArray(parameters[key as keyof SearchOptions])
+          ? JSON.stringify(parameters[key as keyof SearchOptions])
+          : parameters[key as keyof SearchOptions]
       )
     )
     .join('&');

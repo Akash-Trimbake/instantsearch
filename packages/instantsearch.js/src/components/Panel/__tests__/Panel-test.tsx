@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 /** @jsx h */
 
@@ -17,6 +17,7 @@ const cssClasses = {
   collapsibleRoot: 'collapsibleRoot',
   collapsedRoot: 'collapsedRoot',
   collapseButton: 'collapseButton',
+  collapseIcon: 'collapseIcon',
   body: 'body',
   header: 'header',
   footer: 'footer',

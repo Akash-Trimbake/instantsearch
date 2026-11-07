@@ -1,4 +1,4 @@
-import { connectDynamicWidgets } from 'instantsearch.js/es/connectors';
+import { connectDynamicWidgets } from 'instantsearch.js/es/connectors/index';
 
 import { createSuitMixin } from '../mixins/suit';
 import { createWidgetMixin } from '../mixins/widget';

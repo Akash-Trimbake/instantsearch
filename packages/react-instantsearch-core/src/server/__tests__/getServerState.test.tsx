@@ -1,23 +1,29 @@
-/**
- * @jest-environment node
- */
-
 import {
+  createControlledSearchClient,
   createMultiSearchResponse,
   createSearchClient,
   createAlgoliaSearchClient,
+  createCompositionClient,
   createSingleSearchResponse,
   defaultRenderingContent,
 } from '@instantsearch/mocks';
+import connectAutocomplete from 'instantsearch.js/es/connectors/autocomplete/connectAutocomplete';
 import React, { version as ReactVersion } from 'react';
 import { renderToString } from 'react-dom/server';
-import { Hits, RefinementList } from 'react-instantsearch';
+import {
+  EXPERIMENTAL_Autocomplete,
+  Hits,
+  RefinementList,
+  TrendingItems,
+} from 'react-instantsearch';
 import {
   InstantSearch,
   InstantSearchSSRProvider,
   Index,
   DynamicWidgets,
+  Feeds,
   version,
+  useConnector,
   useSearchBox,
 } from 'react-instantsearch-core';
 
@@ -42,6 +48,42 @@ function SearchBox() {
   );
 }
 
+function AutocompleteWithoutSearch() {
+  useConnector(connectAutocomplete, { requiresSearch: false });
+
+  return null;
+}
+
+function RequestFreeAutocomplete() {
+  return (
+    <EXPERIMENTAL_Autocomplete
+      autoFocus
+      requiresSearch={false}
+      indices={[
+        {
+          indexName: 'suggestions',
+          itemComponent: ({ item }) => <>{item.objectID}</>,
+        },
+      ]}
+    />
+  );
+}
+
+function RequestFreeFeedsAutocomplete() {
+  return (
+    <EXPERIMENTAL_Autocomplete
+      autoFocus
+      requiresSearch={false}
+      feeds={[
+        {
+          feedID: 'products',
+          itemComponent: ({ item }) => <>{item.objectID}</>,
+        },
+      ]}
+    />
+  );
+}
+
 function Hit({ hit }: { hit: AlgoliaHit }) {
   return <>{hit.objectID}</>;
 }
@@ -49,6 +91,7 @@ function Hit({ hit }: { hit: AlgoliaHit }) {
 type CreateTestEnvironmentProps = {
   searchClient: InstantSearchProps['searchClient'];
   initialUiState?: InstantSearchProps['initialUiState'];
+  insights?: InstantSearchProps['insights'];
 };
 
 function createTestEnvironment({
@@ -67,6 +110,7 @@ function createTestEnvironment({
       },
     },
   },
+  insights = false,
 }: CreateTestEnvironmentProps) {
   function Search({ children }: { children?: React.ReactNode }) {
     return (
@@ -74,6 +118,7 @@ function createTestEnvironment({
         searchClient={searchClient}
         indexName="instant_search"
         initialUiState={initialUiState}
+        insights={insights}
       >
         {children}
         <RefinementList attribute="brand" />
@@ -232,7 +277,6 @@ describe('getServerState', () => {
           highlightPreTag: '__ais-highlight__',
           maxValuesPerFacet: 10,
           query: 'iphone',
-          tagFilters: '',
         },
       },
       {
@@ -258,7 +302,6 @@ describe('getServerState', () => {
           highlightPreTag: '__ais-highlight__',
           maxValuesPerFacet: 10,
           query: 'iphone',
-          tagFilters: '',
         },
       },
       {
@@ -284,7 +327,6 @@ describe('getServerState', () => {
           highlightPreTag: '__ais-highlight__',
           maxValuesPerFacet: 10,
           query: 'iphone',
-          tagFilters: '',
         },
       },
       {
@@ -310,7 +352,6 @@ describe('getServerState', () => {
           highlightPreTag: '__ais-highlight__',
           maxValuesPerFacet: 10,
           query: 'iphone',
-          tagFilters: '',
         },
       },
       {
@@ -331,13 +372,85 @@ describe('getServerState', () => {
   });
 
   test('returns initialResults', async () => {
-    const searchClient = createAlgoliaSearchClient({});
+    const searchClient = createSearchClient({});
     const { App } = createTestEnvironment({ searchClient });
 
     const serverState = await getServerState(<App />, { renderToString });
 
     expect(Object.keys(serverState.initialResults)).toHaveLength(4);
     expect(serverState.initialResults).toMatchSnapshot();
+  });
+
+  test('returns empty results when no widget requires a search', async () => {
+    const searchClient = createSearchClient({});
+
+    const serverState = await getServerState(
+      <InstantSearchSSRProvider>
+        <InstantSearch searchClient={searchClient} indexName="indexName">
+          <AutocompleteWithoutSearch />
+        </InstantSearch>
+      </InstantSearchSSRProvider>,
+      { renderToString }
+    );
+
+    expect(serverState).toEqual({ initialResults: {} });
+    expect(searchClient.search).not.toHaveBeenCalled();
+  });
+
+  test('excludes isolated autocomplete results when no widget requires a search', async () => {
+    const searchClient = createSearchClient({});
+
+    const serverState = await getServerState(
+      <InstantSearchSSRProvider>
+        <InstantSearch searchClient={searchClient} indexName="indexName">
+          <RequestFreeAutocomplete />
+        </InstantSearch>
+      </InstantSearchSSRProvider>,
+      { renderToString }
+    );
+
+    expect(searchClient.search).toHaveBeenCalledWith([
+      expect.objectContaining({ indexName: 'suggestions' }),
+    ]);
+    expect(serverState).toEqual({ initialResults: {} });
+  });
+
+  test('does not repeat isolated feeds when no widget requires a search', async () => {
+    const searchClient = createCompositionClient();
+
+    const serverState = await getServerState(
+      <InstantSearchSSRProvider>
+        <InstantSearch
+          searchClient={searchClient}
+          compositionID="my-composition"
+        >
+          <RequestFreeFeedsAutocomplete />
+        </InstantSearch>
+      </InstantSearchSSRProvider>,
+      { renderToString }
+    );
+
+    expect(searchClient.search).toHaveBeenCalledTimes(1);
+    expect(serverState).toEqual({ initialResults: {} });
+  });
+
+  test('does not wait for pending isolated autocomplete results', async () => {
+    const { searchClient, searches } = createControlledSearchClient();
+
+    const serverState = await getServerState(
+      <InstantSearchSSRProvider>
+        <InstantSearch searchClient={searchClient} indexName="indexName">
+          <RequestFreeAutocomplete />
+        </InstantSearch>
+      </InstantSearchSSRProvider>,
+      { renderToString }
+    );
+
+    expect(searches).toHaveLength(1);
+    expect(serverState).toEqual({ initialResults: {} });
+
+    searches[0].resolver();
+    await searches[0].promise;
   });
 
   test('searches twice (cached) with dynamic widgets', async () => {
@@ -374,6 +487,51 @@ describe('getServerState', () => {
     expect(spiedSearch).toHaveBeenCalledTimes(2);
     // both calls are the same, so they're cached
     expect(spiedSearch.mock.calls[0][0]).toEqual(spiedSearch.mock.calls[1][0]);
+  });
+
+  test('searches twice with feeds widget (composition)', async () => {
+    const searchClient = createCompositionClient({
+      search: jest.fn(() =>
+        Promise.resolve({
+          results: [
+            createSingleSearchResponse({
+              feedID: 'products',
+              hits: [{ objectID: 'p1' }],
+            } as any),
+            createSingleSearchResponse({
+              feedID: 'articles',
+              hits: [{ objectID: 'a1' }],
+            } as any),
+          ],
+        })
+      ),
+    });
+    const spiedSearch = jest.spyOn(searchClient, 'search');
+
+    const serverState = await getServerState(
+      <InstantSearch searchClient={searchClient} compositionID="my-comp">
+        <Feeds
+          isolated={false}
+          renderFeed={() => <Hits hitComponent={Hit} />}
+        />
+      </InstantSearch>,
+      { renderToString }
+    );
+
+    expect(spiedSearch).toHaveBeenCalledTimes(2);
+
+    const entry = serverState.initialResults['my-comp'];
+    expect(entry?.results).toHaveLength(1);
+    expect(entry?.compositionFeedsResults).toEqual([
+      expect.objectContaining({
+        feedID: 'products',
+        hits: [expect.objectContaining({ objectID: 'p1' })],
+      }),
+      expect.objectContaining({
+        feedID: 'articles',
+        hits: [expect.objectContaining({ objectID: 'a1' })],
+      }),
+    ]);
   });
 
   test('searches twice with dynamic widgets and a refinement', async () => {
@@ -420,7 +578,6 @@ describe('getServerState', () => {
         highlightPreTag: '__ais-highlight__',
         maxValuesPerFacet: 20,
         query: '',
-        tagFilters: '',
       },
     });
 
@@ -434,9 +591,68 @@ describe('getServerState', () => {
         highlightPreTag: '__ais-highlight__',
         maxValuesPerFacet: 20,
         query: '',
-        tagFilters: '',
       },
     });
+  });
+
+  test('does not call recommend if there is no recommend widget', async () => {
+    const searchClient = createAlgoliaSearchClient({
+      search: jest.fn((requests) => {
+        return Promise.resolve(
+          createMultiSearchResponse(
+            ...requests.map(() =>
+              createSingleSearchResponse({
+                renderingContent: defaultRenderingContent,
+              })
+            )
+          )
+        );
+      }),
+      getRecommendations: jest.fn(),
+    });
+    const spiedGetRecommendations = jest.spyOn(
+      searchClient,
+      'getRecommendations'
+    );
+    const { App } = createTestEnvironment({
+      searchClient,
+    });
+
+    await getServerState(<App />, { renderToString });
+
+    expect(spiedGetRecommendations).not.toHaveBeenCalled();
+  });
+
+  test('calls `getRecommendations` but does not call `search` when there are only recommend widgets', async () => {
+    const searchClient = createAlgoliaSearchClient({
+      search: jest.fn((requests) => {
+        return Promise.resolve(
+          createMultiSearchResponse(
+            ...requests.map(() =>
+              createSingleSearchResponse({
+                renderingContent: defaultRenderingContent,
+              })
+            )
+          )
+        );
+      }),
+      getRecommendations: jest.fn().mockResolvedValue({ results: {} }),
+    });
+    const spiedGetRecommendations = jest.spyOn(
+      searchClient,
+      'getRecommendations'
+    );
+    const spiedSearch = jest.spyOn(searchClient, 'search');
+
+    await getServerState(
+      <InstantSearch searchClient={searchClient} indexName="instant_search">
+        <TrendingItems />
+      </InstantSearch>,
+      { renderToString }
+    );
+
+    expect(spiedGetRecommendations).toHaveBeenCalledTimes(1);
+    expect(spiedSearch).not.toHaveBeenCalled();
   });
 
   test('returns HTML from server state', async () => {
@@ -452,21 +668,48 @@ describe('getServerState', () => {
           )
         )
       ) as MockSearchClient['search'],
+      getRecommendations: jest.fn().mockResolvedValue({
+        results: [createSingleSearchResponse({ hits: [{ objectID: '3' }] })],
+      }),
     });
     const { App } = createTestEnvironment({ searchClient });
+    const trendingItemsElement = (
+      <TrendingItems
+        itemComponent={({ item }) => <span>{item.objectID}</span>}
+      />
+    );
 
-    const serverState = await getServerState(<App />, { renderToString });
-    const html = renderToString(<App serverState={serverState} />);
+    const serverState = await getServerState(
+      <App>{trendingItemsElement}</App>,
+      { renderToString }
+    );
+    const html = renderToString(
+      <App serverState={serverState}>{trendingItemsElement}</App>
+    );
 
     expect(html).toMatchInlineSnapshot(`
+      <section class="ais-TrendingItems">
+        <h3 class="ais-TrendingItems-title">
+          Trending items
+        </h3>
+        <div class="ais-TrendingItems-container">
+          <ol class="ais-TrendingItems-list">
+            <li class="ais-TrendingItems-item">
+              <span>
+                3
+              </span>
+            </li>
+          </ol>
+        </div>
+      </section>
       <div class="ais-RefinementList ais-RefinementList--noRefinement">
         <ul class="ais-RefinementList-list">
         </ul>
       </div>
       <div class="ais-SearchBox">
-        <form action
-              class="ais-SearchBox-form"
+        <form class="ais-SearchBox-form"
               novalidate
+              action
         >
           <input class="ais-SearchBox-input"
                  value="iphone"
@@ -526,5 +769,80 @@ describe('getServerState', () => {
         </ol>
       </div>
     `);
+  });
+
+  describe('insights', () => {
+    test('userToken is set when insights has been set to true', async () => {
+      const searchClient = createSearchClient({});
+      const spiedSearch = jest.spyOn(searchClient, 'search');
+
+      function App({
+        serverState,
+      }: {
+        serverState?: InstantSearchServerState;
+      }) {
+        return (
+          <InstantSearchSSRProvider {...serverState}>
+            <InstantSearch
+              searchClient={searchClient}
+              indexName="index"
+              insights={true}
+            >
+              <RefinementList attribute="brand" />
+              <SearchBox />
+
+              <h2>instant_search</h2>
+              <Hits hitComponent={Hit} />
+            </InstantSearch>
+          </InstantSearchSSRProvider>
+        );
+      }
+
+      await getServerState(<App />, { renderToString });
+
+      expect(spiedSearch).toHaveBeenCalledTimes(1);
+
+      const userToken = (spiedSearch.mock.calls[0][0] as any)[0].params
+        ?.userToken;
+      expect(userToken).toEqual(expect.stringMatching(/^anonymous-/));
+    });
+
+    test('only a single user token is generated', async () => {
+      const searchClient = createSearchClient({});
+      const spiedSearch = jest.spyOn(searchClient, 'search');
+
+      function App({
+        serverState,
+      }: {
+        serverState?: InstantSearchServerState;
+      }) {
+        return (
+          <InstantSearchSSRProvider {...serverState}>
+            <InstantSearch
+              searchClient={searchClient}
+              indexName="index"
+              insights={true}
+            >
+              <RefinementList attribute="brand" />
+              <SearchBox />
+              <DynamicWidgets fallbackComponent={RefinementList} />
+
+              <h2>instant_search</h2>
+              <Hits hitComponent={Hit} />
+            </InstantSearch>
+          </InstantSearchSSRProvider>
+        );
+      }
+
+      await getServerState(<App />, { renderToString });
+
+      expect(spiedSearch).toHaveBeenCalledTimes(2);
+
+      const userToken1 = (spiedSearch.mock.calls[0][0] as any)[0].params
+        ?.userToken;
+      const userToken2 = (spiedSearch.mock.calls[1][0] as any)[0].params
+        ?.userToken;
+      expect(userToken1).toEqual(userToken2);
+    });
   });
 });

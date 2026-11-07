@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 
 import { createSearchClient } from '@instantsearch/mocks';
@@ -29,7 +29,7 @@ describe('insights', () => {
       <body>
         <div />
         <script
-          src="https://cdn.jsdelivr.net/npm/search-insights@2.6.0/dist/search-insights.min.js"
+          src="https://cdn.jsdelivr.net/npm/search-insights@2.17.2/dist/search-insights.min.js"
         />
       </body>
     `);

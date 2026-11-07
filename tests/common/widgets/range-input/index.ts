@@ -1,6 +1,8 @@
 import { fakeAct } from '../../common';
 
 import { createBehaviourTests } from './behaviour';
+import { createLinksTests } from './links';
+import { createOptionsTests } from './options';
 
 import type { TestOptions, TestSetup } from '../../common';
 import type { RangeInputWidget } from 'instantsearch.js/es/widgets/range-input/range-input';
@@ -12,13 +14,15 @@ export type RangeInputWidgetSetup = TestSetup<{
 
 export function createRangeInputWidgetTests(
   setup: RangeInputWidgetSetup,
-  { act = fakeAct, skippedTests = {} }: TestOptions = {}
+  { act = fakeAct, skippedTests = {}, flavor = 'javascript' }: TestOptions = {}
 ) {
   beforeEach(() => {
     document.body.innerHTML = '';
   });
 
   describe('RangeInput widget common tests', () => {
-    createBehaviourTests(setup, { act, skippedTests });
+    createBehaviourTests(setup, { act, skippedTests, flavor });
+    createOptionsTests(setup, { act, skippedTests, flavor });
+    createLinksTests(setup, { act, skippedTests, flavor });
   });
 }

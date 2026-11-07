@@ -1,11 +1,13 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 
 import { runTestSuites } from '@instantsearch/tests';
 import * as suites from '@instantsearch/tests/widgets';
 
+import { connectCompare } from '../connectors';
 import instantsearch from '../index.es';
+import { Chat as InstantSearchChat } from '../lib/chat';
 import {
   hierarchicalMenu,
   breadcrumb,
@@ -17,19 +19,39 @@ import {
   hits,
   index,
   rangeInput,
+  rangeSlider,
   hitsPerPage,
   clearRefinements,
   currentRefinements,
   toggleRefinement,
   sortBy,
+  stats,
+  ratingMenu,
+  numericMenu,
+  relatedProducts,
+  frequentlyBoughtTogether,
+  trendingItems,
+  trendingFacets,
+  lookingSimilar,
+  poweredBy,
+  menuSelect,
+  dynamicWidgets,
+  chat,
+  chatTrigger,
+  promptSuggestions,
+  resultCard,
+  autocomplete,
+  filterSuggestions,
+  compareBar,
 } from '../widgets';
 
 import type { TestOptionsMap, TestSetupsMap } from '@instantsearch/tests';
+import type { RecordWithObjectID } from 'instantsearch-ui-components';
 
 type TestSuites = typeof suites;
 const testSuites: TestSuites = suites;
 
-const testSetups: TestSetupsMap<TestSuites> = {
+const testSetups: TestSetupsMap<TestSuites, 'javascript'> = {
   createHierarchicalMenuWidgetTests({ instantSearchOptions, widgetParams }) {
     instantsearch(instantSearchOptions)
       .addWidgets([
@@ -147,6 +169,14 @@ const testSetups: TestSetupsMap<TestSuites> = {
                 </button>
               </div>`,
           },
+          ...widgetParams,
+        }),
+        infiniteHits({
+          container: document.body.appendChild(
+            Object.assign(document.createElement('div'), {
+              id: 'hits-with-defaults',
+            })
+          ),
           ...widgetParams,
         }),
         index({ indexName: 'nested' }).addWidgets([
@@ -267,6 +297,37 @@ const testSetups: TestSetupsMap<TestSuites> = {
       })
       .start();
   },
+  createRangeSliderWidgetTests({ instantSearchOptions, widgetParams }) {
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        rangeSlider({
+          container: document.body.appendChild(document.createElement('div')),
+          ...widgetParams,
+        }),
+      ])
+      .on('error', () => {
+        /*
+         * prevent rethrowing InstantSearch errors, so tests can be asserted.
+         * IRL this isn't needed, as the error doesn't stop execution.
+         */
+      })
+      .start();
+  },
+  createRatingMenuWidgetTests({ instantSearchOptions, widgetParams }) {
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        ratingMenu({
+          container: document.body.appendChild(document.createElement('div')),
+          ...widgetParams,
+        }),
+      ])
+      .on('error', () => {
+        /*
+         * prevent rethrowing InstantSearch errors, so tests can be asserted.
+         * IRL this isn't needed, as the error doesn't stop execution. */
+      })
+      .start();
+  },
   createInstantSearchWidgetTests({ instantSearchOptions }) {
     instantsearch(instantSearchOptions)
       .on('error', () => {
@@ -374,12 +435,19 @@ const testSetups: TestSetupsMap<TestSuites> = {
       })
       .start();
   },
-  createToggleRefinementWidgetTests({ instantSearchOptions, widgetParams }) {
+  createToggleRefinementWidgetTests({
+    instantSearchOptions,
+    // @ts-expect-error `label` is not part of the props for InstantSearch.js, but is for the other flavors
+    widgetParams: { label, ...widgetParams },
+  }) {
     instantsearch(instantSearchOptions)
       .addWidgets([
         toggleRefinement({
           container: document.body.appendChild(document.createElement('div')),
           ...widgetParams,
+          templates: {
+            labelText: label,
+          },
         }),
       ])
       .on('error', () => {
@@ -422,6 +490,408 @@ const testSetups: TestSetupsMap<TestSuites> = {
       })
       .start();
   },
+  createStatsWidgetTests({ instantSearchOptions, widgetParams }) {
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        stats({
+          container: document.body.appendChild(document.createElement('div')),
+          ...widgetParams,
+        }),
+      ])
+      .on('error', () => {
+        /*
+         * prevent rethrowing InstantSearch errors, so tests can be asserted.
+         * IRL this isn't needed, as the error doesn't stop execution.
+         */
+      })
+      .start();
+  },
+  createNumericMenuWidgetTests({ instantSearchOptions, widgetParams }) {
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        numericMenu({
+          container: document.body.appendChild(document.createElement('div')),
+          ...widgetParams,
+        }),
+      ])
+      .on('error', () => {
+        /*
+         * prevent rethrowing InstantSearch errors, so tests can be asserted.
+         * IRL this isn't needed, as the error doesn't stop execution.
+         */
+      })
+      .start();
+  },
+  createRelatedProductsWidgetTests({ instantSearchOptions, widgetParams }) {
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        relatedProducts({
+          container: document.body.appendChild(document.createElement('div')),
+          ...widgetParams,
+        }),
+      ])
+      .on('error', () => {
+        /*
+         * prevent rethrowing InstantSearch errors, so tests can be asserted.
+         * IRL this isn't needed, as the error doesn't stop execution.
+         */
+      })
+      .start();
+  },
+  createFrequentlyBoughtTogetherWidgetTests({
+    instantSearchOptions,
+    widgetParams,
+  }) {
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        frequentlyBoughtTogether({
+          container: document.body.appendChild(document.createElement('div')),
+          ...widgetParams,
+        }),
+      ])
+      .on('error', () => {
+        /*
+         * prevent rethrowing InstantSearch errors, so tests can be asserted.
+         * IRL this isn't needed, as the error doesn't stop execution.
+         */
+      })
+      .start();
+  },
+  createTrendingItemsWidgetTests({ instantSearchOptions, widgetParams }) {
+    const { facetName, facetValue, ...params } = widgetParams;
+    const facetParams =
+      facetName && facetValue ? { facetName, facetValue } : {};
+
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        trendingItems({
+          container: document.body.appendChild(document.createElement('div')),
+          ...facetParams,
+          ...params,
+        }),
+      ])
+      .on('error', () => {
+        /*
+         * prevent rethrowing InstantSearch errors, so tests can be asserted.
+         * IRL this isn't needed, as the error doesn't stop execution.
+         */
+      })
+      .start();
+  },
+  createTrendingFacetsWidgetTests({ instantSearchOptions, widgetParams }) {
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        trendingFacets({
+          container: document.body.appendChild(document.createElement('div')),
+          ...widgetParams,
+        }),
+      ])
+      .on('error', () => {
+        /*
+         * prevent rethrowing InstantSearch errors, so tests can be asserted.
+         * IRL this isn't needed, as the error doesn't stop execution.
+         */
+      })
+      .start();
+  },
+  createLookingSimilarWidgetTests({ instantSearchOptions, widgetParams }) {
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        lookingSimilar({
+          container: document.body.appendChild(document.createElement('div')),
+          ...widgetParams,
+        }),
+      ])
+      .on('error', () => {
+        /*
+         * prevent rethrowing InstantSearch errors, so tests can be asserted.
+         * IRL this isn't needed, as the error doesn't stop execution.
+         */
+      })
+      .start();
+  },
+  createPoweredByWidgetTests({ instantSearchOptions, widgetParams }) {
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        poweredBy({
+          container: document.body.appendChild(document.createElement('div')),
+          ...widgetParams,
+        }),
+      ])
+      .on('error', () => {
+        /*
+         * prevent rethrowing InstantSearch errors, so tests can be asserted.
+         */
+      })
+      .start();
+
+    return {
+      flavor: 'instantsearch.js',
+    };
+  },
+  createMenuSelectWidgetTests({ instantSearchOptions, widgetParams }) {
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        menuSelect({
+          container: document.body.appendChild(document.createElement('div')),
+          ...widgetParams,
+        }),
+      ])
+      .start();
+  },
+  createDynamicWidgetsWidgetTests({ instantSearchOptions, widgetParams }) {
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        dynamicWidgets({
+          container: document.body.appendChild(document.createElement('div')),
+          widgets: [
+            (container) => refinementList({ attribute: 'brand', container }),
+            (container) => menu({ attribute: 'category', container }),
+            (container) =>
+              hierarchicalMenu({
+                attributes: [
+                  'hierarchicalCategories.lvl0',
+                  'hierarchicalCategories.lvl1',
+                ],
+                container,
+              }),
+          ],
+          ...widgetParams,
+        }),
+      ])
+      .start();
+  },
+  createChatWidgetTests({ instantSearchOptions, widgetParams }) {
+    const {
+      renderChat = true,
+      renderRefinements,
+      ...chatWidgetParams
+    } = widgetParams;
+
+    const refinementsWidgets = [];
+    if (renderRefinements) {
+      refinementsWidgets.push(
+        ...[
+          searchBox({
+            container: document.body.appendChild(document.createElement('div')),
+          }),
+          refinementList({
+            container: document.body.appendChild(document.createElement('div')),
+            attribute: 'brand',
+          }),
+          refinementList({
+            container: document.body.appendChild(document.createElement('div')),
+            attribute: 'category',
+          }),
+          hierarchicalMenu({
+            container: document.body.appendChild(document.createElement('div')),
+            attributes: [
+              'hierarchicalCategories.lvl0',
+              'hierarchicalCategories.lvl1',
+            ],
+          }),
+        ]
+      );
+    }
+
+    const createChatWidget = () => {
+      const container = document.body.appendChild(
+        document.createElement('div')
+      );
+
+      if (chatWidgetParams.chat === undefined) {
+        return chat<RecordWithObjectID>({
+          container,
+          ...chatWidgetParams,
+        });
+      }
+
+      if (!(chatWidgetParams.chat instanceof InstantSearchChat)) {
+        throw new Error('Expected the caller-supplied Chat instance.');
+      }
+
+      return chat<RecordWithObjectID>({
+        container,
+        ...chatWidgetParams,
+        chat: chatWidgetParams.chat,
+      });
+    };
+
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        ...refinementsWidgets,
+        chatTrigger({
+          container: document.body.appendChild(document.createElement('div')),
+        }),
+        ...(renderChat ? [createChatWidget()] : []),
+      ])
+      .on('error', () => {
+        /*
+         * prevent rethrowing InstantSearch errors, so tests can be asserted.
+         * IRL this isn't needed, as the error doesn't stop execution.
+         */
+      })
+      .start();
+  },
+  createAutocompleteWidgetTests({ instantSearchOptions, widgetParams }) {
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        autocomplete({
+          container: document.body.appendChild(document.createElement('div')),
+          ...widgetParams,
+        } as Parameters<typeof autocomplete>[0]),
+      ])
+      .on('error', () => {
+        /*
+         * prevent rethrowing InstantSearch errors, so tests can be asserted.
+         * IRL this isn't needed, as the error doesn't stop execution.
+         */
+      })
+      .start();
+  },
+  createFilterSuggestionsWidgetTests({ instantSearchOptions, widgetParams }) {
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        filterSuggestions({
+          container: document.body.appendChild(document.createElement('div')),
+          ...widgetParams,
+        }),
+      ])
+      .on('error', () => {
+        /*
+         * prevent rethrowing InstantSearch errors, so tests can be asserted.
+         * IRL this isn't needed, as the error doesn't stop execution.
+         */
+      })
+      .start();
+  },
+  createPromptSuggestionsWidgetTests({ instantSearchOptions, widgetParams }) {
+    // The widget hands clicked suggestions to a `chat` on the same index, and
+    // errors without one, so the default setup mounts both. `renderChat: false`
+    // is how a test asks for the unconfigured page.
+    const { renderChat = true, ...promptSuggestionsWidgetParams } =
+      widgetParams;
+
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        promptSuggestions({
+          container: document.body.appendChild(document.createElement('div')),
+          ...promptSuggestionsWidgetParams,
+        }),
+        ...(renderChat
+          ? [
+              chat({
+                container: document.body.appendChild(
+                  document.createElement('div')
+                ),
+                // A dedicated id: the `agentId` the chat suites use keys
+                // persisted messages in `sessionStorage` that leak across tests
+                // in this file.
+                agentId: 'promptSuggestionsChatAgentId',
+              }),
+            ]
+          : []),
+      ])
+      .on('error', () => {
+        /*
+         * prevent rethrowing InstantSearch errors, so tests can be asserted.
+         * IRL this isn't needed, as the error doesn't stop execution.
+         */
+      })
+      .start();
+  },
+  createResultCardWidgetTests({ instantSearchOptions, widgetParams }) {
+    // "Continue in chat" needs a `chat` with the card's `agentId` on the same
+    // index, so the default setup mounts both. `renderChat: false` is how a
+    // test asks for the unconfigured page.
+    const { renderChat = true, ...resultCardWidgetParams } = widgetParams;
+
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        resultCard({
+          container: document.body.appendChild(document.createElement('div')),
+          ...resultCardWidgetParams,
+        }),
+        ...(renderChat
+          ? [
+              chat({
+                container: document.body.appendChild(
+                  document.createElement('div')
+                ),
+                agentId: resultCardWidgetParams.agentId,
+              }),
+            ]
+          : []),
+      ])
+      .on('error', () => {
+        /*
+         * prevent rethrowing InstantSearch errors, so tests can be asserted.
+         * IRL this isn't needed, as the error doesn't stop execution.
+         */
+      })
+      .start();
+  },
+  createCompareBarWidgetTests({ instantSearchOptions, widgetParams }) {
+    // The bar hands the comparison to a `chat` on the same index, so the
+    // default setup mounts both. A sibling `compare` widget renders a toggle
+    // per product, the way a per-hit "Compare" button would.
+    const {
+      renderChat = true,
+      products = [],
+      ...compareBarWidgetParams
+    } = widgetParams;
+
+    const compareToggles = connectCompare<{ container: HTMLElement }>(
+      ({ isSelected, toggleItem, widgetParams: { container } }) => {
+        container.textContent = '';
+        products.forEach((product) => {
+          const button = document.createElement('button');
+          button.setAttribute(
+            'data-testid',
+            `CompareToggle-${product.objectID}`
+          );
+          button.setAttribute(
+            'aria-pressed',
+            String(isSelected(product.objectID))
+          );
+          button.addEventListener('click', () => toggleItem(product));
+          container.appendChild(button);
+        });
+      }
+    );
+
+    instantsearch(instantSearchOptions)
+      .addWidgets([
+        compareToggles({
+          container: document.body.appendChild(document.createElement('div')),
+          configurationId: compareBarWidgetParams.configurationId,
+        }),
+        compareBar({
+          container: document.body.appendChild(document.createElement('div')),
+          ...compareBarWidgetParams,
+        }),
+        ...(renderChat
+          ? [
+              chat({
+                container: document.body.appendChild(
+                  document.createElement('div')
+                ),
+                // A dedicated id: the `agentId` the chat suites use keys
+                // persisted messages in `sessionStorage` that leak across tests
+                // in this file.
+                agentId: 'compareBarChatAgentId',
+              }),
+            ]
+          : []),
+      ])
+      .on('error', () => {
+        /*
+         * prevent rethrowing InstantSearch errors, so tests can be asserted.
+         * IRL this isn't needed, as the error doesn't stop execution.
+         */
+      })
+      .start();
+  },
 };
 
 const testOptions: TestOptionsMap<TestSuites> = {
@@ -431,8 +901,14 @@ const testOptions: TestOptionsMap<TestSuites> = {
   createMenuWidgetTests: undefined,
   createPaginationWidgetTests: undefined,
   createInfiniteHitsWidgetTests: undefined,
-  createHitsWidgetTests: undefined,
+  createHitsWidgetTests: {
+    skippedTests: {
+      'common rendering': true,
+    },
+  },
   createRangeInputWidgetTests: undefined,
+  createRangeSliderWidgetTests: undefined,
+  createRatingMenuWidgetTests: undefined,
   createInstantSearchWidgetTests: undefined,
   createHitsPerPageWidgetTests: undefined,
   createClearRefinementsWidgetTests: undefined,
@@ -440,10 +916,27 @@ const testOptions: TestOptionsMap<TestSuites> = {
   createToggleRefinementWidgetTests: undefined,
   createSearchBoxWidgetTests: undefined,
   createSortByWidgetTests: undefined,
+  createStatsWidgetTests: undefined,
+  createNumericMenuWidgetTests: undefined,
+  createRelatedProductsWidgetTests: undefined,
+  createFrequentlyBoughtTogetherWidgetTests: undefined,
+  createTrendingItemsWidgetTests: undefined,
+  createTrendingFacetsWidgetTests: undefined,
+  createLookingSimilarWidgetTests: undefined,
+  createPoweredByWidgetTests: undefined,
+  createMenuSelectWidgetTests: undefined,
+  createDynamicWidgetsWidgetTests: undefined,
+  createChatWidgetTests: undefined,
+  createAutocompleteWidgetTests: undefined,
+  createFilterSuggestionsWidgetTests: undefined,
+  createPromptSuggestionsWidgetTests: undefined,
+  createResultCardWidgetTests: undefined,
+  createCompareBarWidgetTests: undefined,
 };
 
 describe('Common widget tests (InstantSearch.js)', () => {
   runTestSuites({
+    flavor: 'javascript',
     testSuites,
     testSetups,
     testOptions,

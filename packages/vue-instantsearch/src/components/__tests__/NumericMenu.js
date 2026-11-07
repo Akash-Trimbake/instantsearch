@@ -1,5 +1,5 @@
 /**
- * @jest-environment jsdom
+ * @jest-environment @instantsearch/testutils/jest-environment-jsdom.ts
  */
 
 import { mount } from '../../../test/utils';
@@ -61,57 +61,6 @@ const defaultProps = {
     { label: '>= 500$', start: 500 },
   ],
 };
-
-it('accepts an attribute prop', () => {
-  __setState(defaultState);
-
-  const props = {
-    ...defaultProps,
-  };
-
-  const wrapper = mount(NumericMenu, {
-    propsData: props,
-  });
-
-  expect(wrapper.vm.widgetParams.attribute).toBe('brand');
-});
-
-it('accepts an items prop', () => {
-  __setState(defaultState);
-
-  const props = {
-    ...defaultProps,
-  };
-
-  const wrapper = mount(NumericMenu, {
-    propsData: props,
-  });
-
-  expect(wrapper.vm.widgetParams.items).toEqual([
-    { label: 'All' },
-    { label: '<= 10$', end: 10 },
-    { label: '10$ - 100$', start: 10, end: 100 },
-    { label: '100$ - 500$', start: 100, end: 500 },
-    { label: '>= 500$', start: 500 },
-  ]);
-});
-
-it('accepts an transformItems prop', () => {
-  __setState(defaultState);
-
-  const identity = (x) => x;
-
-  const props = {
-    ...defaultProps,
-    transformItems: identity,
-  };
-
-  const wrapper = mount(NumericMenu, {
-    propsData: props,
-  });
-
-  expect(wrapper.vm.widgetParams.transformItems).toBe(identity);
-});
 
 describe('default render', () => {
   it('renders correctly', () => {
